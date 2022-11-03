@@ -1,25 +1,22 @@
 import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Tuple
 
+import aiofiles
+import shortuuid
+from fastapi import UploadFile
 from sqlalchemy import Table, Column, Integer, String, DateTime, Identity, MetaData
 from sqlalchemy.exc import UnboundExecutionError
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 
-from enums import POSTGRES_ADDRESS, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PICTURES_TABLE
+from enums import POSTGRES_ADDRESS, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PICTURES_TABLE, RAW_PICTURES_DIR
+from postgres.db_models import Picture, PictureMetadata
 
 # "postgres-svc.postgres.cluster.local"
 # "pictures"
 
 logger = logging.getLogger(__name__)
-
-pictures_table_columns = [
-    Column("id", Integer, Identity(start=0, cycle=True), primary_key=True),
-    Column("picture_location", String),
-    Column("picture_timestamp", DateTime),
-    Column("human_cat_yes", Integer, default=0),
-    Column("human_water_yes", Integer, default=0),
-    Column("human_cat_no", Integer, default=0),
-    Column("human_water_no", Integer, default=0),
-]
 
 
 class PostgresException(Exception):
@@ -30,23 +27,32 @@ class PostgresException(Exception):
 
 class PictureService:
 
-    def __init__(self):
-        self._url = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}"
-        self._engine: AsyncEngine = create_async_engine(self._url, echo=True, future=True)
-        if not self._check_for_table(POSTGRES_PICTURES_TABLE):
-            raise PostgresException("Could not connect to Postgres.")
+    def __init__(self, db: AsyncSession):
+        self._db = db
 
-    def _check_for_table(self, table) -> bool:
-        try:
-            with self._engine.sync_engine.begin() as connection:
-                if not self._engine.dialect.has_table(connection=connection, table_name=table):
-                    metadata = MetaData(self._engine)
-                    Table(table, metadata, *pictures_table_columns)
-                    metadata.create_all()
-            return True
-        except UnboundExecutionError:
-            logger.error(
-                f"Failed to connect to postgres instance at {self._url}. "
-            )
-            return False
+    async def _save_picture(self, in_file: UploadFile, timestamp: float) -> Tuple[Path, datetime]:
+        filename = f"{timestamp}_{shortuuid.uuid()}.jpeg"
+        time = datetime.fromtimestamp(timestamp)
+        raw_picture_path = RAW_PICTURES_DIR.joinpath(filename)
+        async with aiofiles.open(raw_picture_path, 'w+b') as out_file:
+            content = await in_file.read()
+            await out_file.write(content)
+        return raw_picture_path, time
 
+    async def create_picture(self, picture: UploadFile, timestamp: float) -> Picture:
+        raw_picture_path, time = await self._save_picture(in_file=picture, timestamp=timestamp)
+        time = datetime.fromtimestamp(timestamp)
+        db_picture = Picture(
+            raw_picture_location=f"{raw_picture_path}",
+            pictures_location=f"{raw_picture_path}",
+            picture_timestamp=time,
+        )
+        self._db.add(db_picture)
+        await self._db.commit()
+        await self._db.refresh(db_picture)
+        db_picture_metadata = PictureMetadata(picture_id=db_picture.id)
+        self._db.add(db_picture_metadata)
+        await self._db.commit()
+        await self._db.refresh(db_picture_metadata)
+        await self._db.refresh(db_picture)
+        return db_picture

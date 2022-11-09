@@ -3,6 +3,16 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class Picture(BaseModel):
+    id: int
+    raw_picture_location: str
+    pictures_location: str
+    picture_timestamp: datetime
+
+    class Config:
+        orm_mode = True
+
+
 class PictureMetadata(BaseModel):
     id: int
     picture_id: int
@@ -12,17 +22,6 @@ class PictureMetadata(BaseModel):
     human_water_yes: int
     human_cat_no: int
     human_water_no: int
-
-    class Config:
-        orm_mode = True
-
-
-class Picture(BaseModel):
-    id: int
-    raw_picture_location: str
-    pictures_location: str
-    picture_timestamp: datetime
-    picture_metadata: PictureMetadata
 
     class Config:
         orm_mode = True

@@ -1,6 +1,9 @@
 /venv/
 
 .idea
-src/waterbowl-api/postgres/__pycache__/
-src/waterbowl-api/__pycache__/
+src/waterbowl_api/postgres/__pycache__/
+src/waterbowl_api/__pycache__/
+tests/__pycache__/
+tests/integration/__pycache__/
+tests/unit/__pycache__/
 /raw-pictures/

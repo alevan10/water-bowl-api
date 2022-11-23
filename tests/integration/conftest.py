@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 
 import pytest
 import pytest_asyncio
@@ -19,33 +20,41 @@ async def postgres_engine() -> AsyncConnection:
         echo=True,
     )
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
         yield engine
     await engine.dispose()
 
 
-@pytest.fixture
-def postgres(postgres_engine: AsyncConnection) -> AsyncSession:
+@pytest_asyncio.fixture
+async def postgres(postgres_engine: AsyncConnection) -> AsyncSession:
     async_local_session = sessionmaker(postgres_engine, expire_on_commit=False, class_=AsyncSession)
     yield async_local_session()
 
 
 @pytest_asyncio.fixture
-def postgres_tables(postgres_engine: AsyncConnection) -> tuple[Table, Table]:
-    postgres_engine.run_sync(Base.metadata.reflect)
+async def postgres_tables(postgres_engine: AsyncConnection) -> tuple[Table, Table]:
+    await postgres_engine.run_sync(Base.metadata.reflect)
     yield Base.metadata.tables["test_pictures"], Base.metadata.tables["test_pictures_modeling_data"]
 
 
 @pytest_asyncio.fixture
+async def cleanup(postgres_engine):
+    async with postgres_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+
+@pytest_asyncio.fixture
 def add_picture(
-        postgres_session: AsyncSession,
+        postgres: AsyncSession,
         test_picture_file: Path,
         test_data_dir: Path
 ):
     file = test_picture_file
     files = test_data_dir
     now = datetime.now()
-    session = postgres_session
+    session = postgres
 
     async def _add_picture(
             raw_picture_file: Path = file,
@@ -86,4 +95,12 @@ def get_picture(
 def picture_upload(test_picture_file):
     with open(test_picture_file, "rb") as file_upload:
         yield UploadFile(filename=test_picture_file.name, file=file_upload)
+
+
+@pytest.fixture
+def mock_picture_service_dirs(test_raw_picture_storage):
+    with mock.patch("picture_service.RAW_PICTURES_DIR") as raw_pictures_dir:
+        raw_pictures_dir.joinpath = test_raw_picture_storage.joinpath
+        yield
+
 

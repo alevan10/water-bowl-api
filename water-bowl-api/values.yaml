@@ -31,6 +31,19 @@ service:
   type: ClusterIP
   port: 8003
 
+deployment:
+  env:
+    - name: "POSTGRES_ADDRESS"
+      value: "postgres-svc.postgres.cluster.local"
+    - name: "POSTGRES_DATABASE"
+      value: "waterbowl"
+    - name: "PICTURES_MODELING_DATA"
+      value: "pictures_modeling_data"
+    - name: "RAW_PICTURES_DIR"
+      value: "/waterbowl/pictures/raw"
+    - name: "PICTURES_DIR"
+      value: "/waterbowl/pictures"
+
 ingress:
   enabled: true
   className: ""

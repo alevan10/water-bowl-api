@@ -12,3 +12,11 @@ black:
 
 lint:
 	pylint -E -d C0301 src/waterbowl-api tests
+
+build:
+		export WATER_BOWL_API_TAG=$(shell python version_checker.py --return-version)
+		docker buildx build -f src/docker/Dockerfile --platform linux/amd64 --tag levan.home:5000/water-bowl-api:${WATER_BOWL_API_TAG} --load .
+		docker buildx build -f src/docker/Dockerfile --platform linux/arm64 --tag levan.home:5000/water-bowl-api:${WATER_BOWL_API_TAG} --load .
+
+push-prod: build
+		docker push levan.home:5000/water-bowl-api:$(shell python version_checker.py --return-version)

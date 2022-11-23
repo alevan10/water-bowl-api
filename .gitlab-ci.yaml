@@ -108,4 +108,4 @@ Deploy:
   before_script: []
   script:
     - WATER_BOWL_API_VERSION=$(cat VERSION)
-    - helm upgrade --install water-bowl-api ./horizons-api --values=./waterbowl_api/values.yaml --namespace waterbowl --create-namespace --set image.tag=WATER_BOWL_API_VERSION
+    - helm upgrade --install water-bowl-api ./horizons-api --values=./waterbowl_api/values.yaml --namespace waterbowl --create-namespace --set image.tag=${WATER_BOWL_API_VERSION}

@@ -45,6 +45,8 @@ def test_raw_picture_storage(test_picture_storage):
 
 @pytest.fixture
 def mock_picture_locations(test_picture_storage, test_raw_picture_storage):
-    with mock.patch.dict(os.environ, {"RAW_PICTURES_DIR": str(test_raw_picture_storage)}):
+    with mock.patch.dict(
+        os.environ, {"RAW_PICTURES_DIR": str(test_raw_picture_storage)}
+    ):
         with mock.patch.dict(os.environ, {"PICTURES_DIR": str(test_picture_storage)}):
             yield

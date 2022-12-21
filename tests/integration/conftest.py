@@ -44,15 +44,14 @@ def postgres(asyncio_loop) -> AsyncSession:
 @pytest.fixture
 async def postgres_tables(postgres_engine: AsyncConnection) -> tuple[Table, Table]:
     await postgres_engine.run_sync(Base.metadata.reflect)
-    yield Base.metadata.tables["test_pictures"], Base.metadata.tables["test_pictures_modeling_data"]
-
+    yield Base.metadata.tables["test_pictures"], Base.metadata.tables[
+        "test_pictures_modeling_data"
+    ]
 
 
 @pytest.fixture
 def add_picture(
-        postgres: AsyncSession,
-        test_picture_file: Path,
-        test_data_dir: Path
+    postgres: AsyncSession, test_picture_file: Path, test_data_dir: Path
 ) -> AsyncGenerator[Picture, None]:
     file = test_picture_file
     files = test_data_dir
@@ -60,9 +59,9 @@ def add_picture(
     session = postgres
 
     async def _add_picture(
-            raw_picture_file: Path = file,
-            pictures_file: Path = files,
-            timestamp: datetime = now
+        raw_picture_file: Path = file,
+        pictures_file: Path = files,
+        timestamp: datetime = now,
     ):
 
         new_metadata = PictureMetadata()
@@ -84,13 +83,11 @@ def add_picture(
 
 @pytest.fixture
 def get_picture(
-        postgres_session: AsyncSession,
+    postgres_session: AsyncSession,
 ):
     session = postgres_session
 
-    async def _get_picture(
-            picture_id: int
-    ):
+    async def _get_picture(picture_id: int):
         return await session.get(Picture, picture_id)
 
     yield _get_picture
@@ -107,5 +104,3 @@ def mock_picture_service_dirs(test_raw_picture_storage):
     with mock.patch("picture_service.RAW_PICTURES_DIR") as raw_pictures_dir:
         raw_pictures_dir.joinpath = test_raw_picture_storage.joinpath
         yield
-
-

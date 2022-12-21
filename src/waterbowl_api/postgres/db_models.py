@@ -39,4 +39,3 @@ class Picture(Base):
     picture_timestamp = Column(DateTime)
 
     picture_metadata = relationship("PictureMetadata", foreign_keys=[metadata_id])
-

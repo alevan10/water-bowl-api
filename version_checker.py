@@ -32,18 +32,46 @@ def coro(f):
 
 @click.command()
 @coro
-@click.option('--return-version', is_flag=True, required=False, default=False, help="Return the current version only.")
-@click.option('--bump-patch', is_flag=True, required=False, default=False, help="Make a patch version bump.")
-@click.option('--bump-minor', is_flag=True, required=False, default=False, help="Make a minor version bump.")
-@click.option('--bump-major', is_flag=True, required=False, default=False, help="Make a minor version bump.")
-async def check_version(return_version: bool, bump_patch: bool, bump_minor: bool, bump_major: bool):
+@click.option(
+    "--return-version",
+    is_flag=True,
+    required=False,
+    default=False,
+    help="Return the current version only.",
+)
+@click.option(
+    "--bump-patch",
+    is_flag=True,
+    required=False,
+    default=False,
+    help="Make a patch version bump.",
+)
+@click.option(
+    "--bump-minor",
+    is_flag=True,
+    required=False,
+    default=False,
+    help="Make a minor version bump.",
+)
+@click.option(
+    "--bump-major",
+    is_flag=True,
+    required=False,
+    default=False,
+    help="Make a minor version bump.",
+)
+async def check_version(
+    return_version: bool, bump_patch: bool, bump_minor: bool, bump_major: bool
+):
     major, minor, patch = get_version()
     version_str = make_version_string(major, minor, patch)
     if return_version:
         click.echo(version_str)
         sys.exit(0)
     async with aiohttp.ClientSession() as session:
-        async with session.get("http://levan.home:5000/v2/water-bowl-api/tags/list") as resp:
+        async with session.get(
+            "http://levan.home:5000/v2/water-bowl-api/tags/list"
+        ) as resp:
             resp_json = await resp.json()
             available_versions = resp_json.get("tags", [])
     if version_str in available_versions:

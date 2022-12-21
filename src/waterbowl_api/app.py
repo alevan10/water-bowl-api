@@ -13,6 +13,7 @@ default_origins = [
     "http://localhost:8080",
 ]
 
+
 def setup_local_files() -> None:
     if not RAW_PICTURES_DIR.exists():
         RAW_PICTURES_DIR.mkdir(parents=True)

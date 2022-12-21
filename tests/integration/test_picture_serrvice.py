@@ -13,24 +13,25 @@ def now():
 
 @pytest.mark.usefixtures("mock_picture_service_dirs")
 class TestPictureService:
-
     @pytest.mark.asyncio
     async def test_add_picture(
-            self,
-            now,
-            postgres,
-            picture_upload,
-            test_picture_file,
-            test_data_dir,
-            test_raw_picture_storage,
+        self,
+        now,
+        postgres,
+        picture_upload,
+        test_picture_file,
+        test_data_dir,
+        test_raw_picture_storage,
     ):
         picture_svc = PictureService(db=postgres)
         expected_picture = Picture(
             raw_picture_location=str(test_picture_file),
             pictures_location=str(test_data_dir),
-            picture_timestamp=now
+            picture_timestamp=now,
         )
-        test_picture = await picture_svc.create_picture(picture=picture_upload, timestamp=now.timestamp())
+        test_picture = await picture_svc.create_picture(
+            picture=picture_upload, timestamp=now.timestamp()
+        )
 
         stored_pictures = list(test_raw_picture_storage.glob("*.jpeg"))
         assert len(stored_pictures) == 1
@@ -41,14 +42,14 @@ class TestPictureService:
 
     @pytest.mark.asyncio
     async def test_get_picture(
-            self,
-            now,
-            add_picture,
-            postgres,
-            picture_upload,
-            test_picture_file,
-            test_data_dir,
-            test_raw_picture_storage,
+        self,
+        now,
+        add_picture,
+        postgres,
+        picture_upload,
+        test_picture_file,
+        test_data_dir,
+        test_raw_picture_storage,
     ):
         test_picture = await add_picture(timestamp=now)
 

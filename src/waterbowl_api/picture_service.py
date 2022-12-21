@@ -71,7 +71,9 @@ class PictureService:
         return item
 
     async def get_metadata(self, metadata_id: int) -> PictureMetadata:
-        metadata = await self._get_single_item(item_type=PictureMetadata, item_id=metadata_id)
+        metadata = await self._get_single_item(
+            item_type=PictureMetadata, item_id=metadata_id
+        )
         return metadata
 
     async def get_picture(self, picture_id: int) -> Picture:

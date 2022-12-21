@@ -48,6 +48,7 @@ Black:
   script:
     - python -m black . --check --verbose
 Lint_Dockerfile:
+  stage: Static Analysis
   before_script: []
   image: hadolint/hadolint:latest-debian
   script:

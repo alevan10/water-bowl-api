@@ -67,7 +67,8 @@ Integration:
     - name: postgres:14.3
       alias: postgres
       variables:
-        POSTGRES_DB: "postgres"
+        POSTGRES_ADDRESS: "postgres:5432"
+        POSTGRES_DATABASE: "postgres"
         POSTGRES_USER: "postgres"
         POSTGRES_PASSWORD: "postgres"
   script:

@@ -1,56 +1,59 @@
+import asyncio
+from asyncio import AbstractEventLoop
 from datetime import datetime
 from pathlib import Path
+from typing import AsyncGenerator
 from unittest import mock
 
 import pytest
-import pytest_asyncio
 from fastapi import UploadFile
 from sqlalchemy import Table
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncConnection
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from postgres.db_models import Picture, PictureMetadata
 from postgres.database import Base
 from enums import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_ADDRESS, POSTGRES_DATABASE
 
+database_uri = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}/{POSTGRES_DATABASE}"
+engine = create_async_engine(database_uri)
+Session = sessionmaker(bind=engine)
 
-@pytest_asyncio.fixture
-async def postgres_engine() -> AsyncConnection:
-    engine = create_async_engine(
-        f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}/{POSTGRES_DATABASE}",
-        echo=True,
-    )
+
+async def reset_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-        yield engine
-    await engine.dispose()
 
 
-@pytest_asyncio.fixture
-async def postgres(postgres_engine: AsyncConnection) -> AsyncSession:
-    async_local_session = sessionmaker(postgres_engine, expire_on_commit=False, class_=AsyncSession)
-    yield async_local_session()
+@pytest.fixture(scope="module")
+def asyncio_loop() -> AbstractEventLoop:
+    loop = asyncio.get_event_loop()
+    yield loop
+    loop.close()
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
+def postgres(asyncio_loop) -> AsyncSession:
+    asyncio_loop.run_until_complete(reset_tables())
+    session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    db = session()
+    yield db
+    asyncio_loop.run_until_complete(db.close())
+
+
+@pytest.fixture
 async def postgres_tables(postgres_engine: AsyncConnection) -> tuple[Table, Table]:
     await postgres_engine.run_sync(Base.metadata.reflect)
     yield Base.metadata.tables["test_pictures"], Base.metadata.tables["test_pictures_modeling_data"]
 
 
-@pytest_asyncio.fixture
-async def cleanup(postgres_engine):
-    async with postgres_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
 
-
-@pytest_asyncio.fixture
+@pytest.fixture
 def add_picture(
         postgres: AsyncSession,
         test_picture_file: Path,
         test_data_dir: Path
-):
+) -> AsyncGenerator[Picture, None]:
     file = test_picture_file
     files = test_data_dir
     now = datetime.now()
@@ -61,23 +64,25 @@ def add_picture(
             pictures_file: Path = files,
             timestamp: datetime = now
     ):
+
+        new_metadata = PictureMetadata()
+        session.add(new_metadata)
+        await session.commit()
         new_picture = Picture(
+            metadata_id=new_metadata.id,
             raw_picture_location=f"{raw_picture_file}",
             pictures_location=f"{pictures_file}",
             picture_timestamp=timestamp,
         )
         session.add(new_picture)
         await session.commit()
-        new_picture = await session.refresh(new_picture)
-        new_metadata = PictureMetadata(picture_id=new_picture.id)
-        session.add(new_metadata)
-        await session.commit()
+        await session.refresh(new_picture)
         return new_picture
 
     yield _add_picture
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 def get_picture(
         postgres_session: AsyncSession,
 ):

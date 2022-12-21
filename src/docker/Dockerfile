@@ -1,4 +1,4 @@
-FROM python:3.11.0
+FROM python:3.9
 WORKDIR /opt/waterbowl
 COPY src/ api/
 ENV PYTHONPATH "/opt/waterbowl:/opt/waterbowl/api:/opt/waterbowl/api/waterbowl-api"

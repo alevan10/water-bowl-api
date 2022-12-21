@@ -12,9 +12,9 @@ AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSes
 Base = declarative_base()
 
 
-def get_db():
+async def get_db():
     db = AsyncSessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        await db.close()

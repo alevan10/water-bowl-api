@@ -84,8 +84,6 @@ Build:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   before_script: []
-  dependencies:
-    - Build_Prep
   script:
     - WATER_BOWL_API_VERSION=$(cat VERSION)
     - mkdir -p /kaniko/.docker
@@ -102,8 +100,6 @@ Build:
 Deploy:
   stage: Deploy
   retry: 1
-  dependencies:
-    - Build_Prep
   only:
     - main
   image: alpine/helm:3.8.1

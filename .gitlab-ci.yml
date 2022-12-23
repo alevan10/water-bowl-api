@@ -47,6 +47,13 @@ Black:
   retry: 1
   script:
     - python -m black . --check --verbose
+
+Version_Check:
+  stage: Static Analysis
+  retry: 1
+  script:
+    - python version_checker.py
+
 Lint_Dockerfile:
   stage: Static Analysis
   retry: 1
@@ -111,4 +118,4 @@ Deploy:
   before_script: []
   script:
     - WATER_BOWL_API_VERSION=$(cat VERSION)
-    - helm upgrade --install water-bowl-api ./horizons-api --values=./waterbowl_api/values.yaml --namespace waterbowl --create-namespace --set image.tag=${WATER_BOWL_API_VERSION}
+    - helm upgrade --install water-bowl-api ./water-bowl-api --values=./water-bowl-api/values.yaml --namespace waterbowl --create-namespace --set image.tag=${WATER_BOWL_API_VERSION}

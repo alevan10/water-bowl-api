@@ -14,6 +14,7 @@ spec:
       {{- include "waterbowl-api.selectorLabels" . | nindent 6 }}
   volumeClaimTemplates:
     - metadata:
+        name: "nfs-volume"
         {{- with .Values.podAnnotations }}
         annotations:
           {{- toYaml . | nindent 8 }}
@@ -42,7 +43,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: "waterbowl-api"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -52,12 +53,12 @@ spec:
             - name: "POSTGRES_USER"
               valueFrom:
                 secretKeyRef:
-                  name: postgres-user
+                  name: postgres-login
                   key: "POSTGRES_USER"
             - name: "POSTGRES_PASSWORD"
               valueFrom:
                 secretKeyRef:
-                  name: postgres-password
+                  name: postgres-login
                   key: "POSTGRES_PASSWORD"
           ports:
             - name: http
@@ -73,7 +74,7 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-        - volumeMounts:
+          volumeMounts:
             - mountPath: "/waterbowl"
               name: nfs-volume
               readOnly: false

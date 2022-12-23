@@ -1,11 +1,11 @@
-.PHONY: start-postgres stop-postgres black lint isort
+.PHONY: start-postgres stop-postgres black lint isort run-local stop-local push-prod
 POSTGRES_PASSWORD ?= postgres
 POSTGRES_USER ?= postgres
 start-postgres:
-	docker run -p 5432:5432 --rm --name test-postgres -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} -e POSTGRES_USER=${POSTGRES_USER} -d postgres:14.3
+	docker compose up -d postgres
 
 stop-postgres:
-	docker stop test-postgres
+	docker compose down
 
 black:
 	python -m black .
@@ -17,9 +17,14 @@ isort:
 	isort **/*.py
 
 build:
-		export WATER_BOWL_API_TAG=$(shell python version_checker.py --return-version)
-		docker buildx build -f src/docker/Dockerfile --platform linux/amd64 --tag levan.home:5000/water-bowl-api:${WATER_BOWL_API_TAG} --load .
-		docker buildx build -f src/docker/Dockerfile --platform linux/arm64 --tag levan.home:5000/water-bowl-api:${WATER_BOWL_API_TAG} --load .
+	docker buildx build -f src/docker/Dockerfile --platform linux/amd64 --tag levan.home:5000/water-bowl-api:$(shell python version_checker.py --return-version) --load .
+	docker buildx build -f src/docker/Dockerfile --platform linux/arm64 --tag levan.home:5000/water-bowl-api:$(shell python version_checker.py --return-version) --load .
+
+run-local:
+	docker compose up -d
+
+stop-local:
+	docker compose down
 
 push-prod: build
-		docker push levan.home:5000/water-bowl-api:$(shell python version_checker.py --return-version)
+	docker push levan.home:5000/water-bowl-api:$(shell python version_checker.py --return-version)

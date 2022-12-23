@@ -1,11 +1,14 @@
 import asyncio
 from asyncio import AbstractEventLoop
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
+import pytest_asyncio
 from fastapi import UploadFile
 from sqlalchemy import Table
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
@@ -16,32 +19,38 @@ from enums import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_ADDRESS, POSTGRES_D
 
 database_uri = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}/{POSTGRES_DATABASE}"
 engine = create_async_engine(database_uri)
-Session = sessionmaker(bind=engine)
+TestingSession = sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
 
 
-async def reset_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-
-
-@pytest.fixture(scope="module")
-def asyncio_loop() -> AbstractEventLoop:
-    loop = asyncio.get_event_loop()
+@pytest.fixture(scope='session')
+def event_loop():
+    """
+    Creates an instance of the default event loop for the test session.
+    """
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest.fixture
-def postgres(asyncio_loop) -> AsyncSession:
-    asyncio_loop.run_until_complete(reset_tables())
-    session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    db = session()
+@pytest_asyncio.fixture(scope="function")
+async def postgres_connection() -> AsyncConnection:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+        yield conn
+        await conn.close()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def postgres(postgres_connection) -> AsyncSession:
+    db = TestingSession(bind=postgres_connection)
     yield db
-    asyncio_loop.run_until_complete(db.close())
+    await db.close()
 
 
 @pytest.fixture
+@pytest.mark.asyncio
 async def postgres_tables(postgres_engine: AsyncConnection) -> tuple[Table, Table]:
     await postgres_engine.run_sync(Base.metadata.reflect)
     yield Base.metadata.tables["test_pictures"], Base.metadata.tables[
@@ -51,7 +60,7 @@ async def postgres_tables(postgres_engine: AsyncConnection) -> tuple[Table, Tabl
 
 @pytest.fixture
 def add_picture(
-    postgres: AsyncSession, test_picture_file: Path, test_data_dir: Path
+        postgres: AsyncSession, test_picture_file: Path, test_data_dir: Path
 ) -> AsyncGenerator[Picture, None]:
     file = test_picture_file
     files = test_data_dir
@@ -59,11 +68,10 @@ def add_picture(
     session = postgres
 
     async def _add_picture(
-        raw_picture_file: Path = file,
-        pictures_file: Path = files,
-        timestamp: datetime = now,
+            raw_picture_file: Path = file,
+            pictures_file: Path = files,
+            timestamp: datetime = now,
     ):
-
         new_metadata = PictureMetadata()
         session.add(new_metadata)
         await session.commit()
@@ -83,7 +91,7 @@ def add_picture(
 
 @pytest.fixture
 def get_picture(
-    postgres_session: AsyncSession,
+        postgres_session: AsyncSession,
 ):
     session = postgres_session
 

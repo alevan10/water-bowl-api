@@ -38,4 +38,4 @@ class Picture(Base):
     pictures_location = Column(String)
     picture_timestamp = Column(DateTime)
 
-    picture_metadata = relationship("PictureMetadata", foreign_keys=[metadata_id])
+    picture_metadata = relationship("PictureMetadata", foreign_keys=[metadata_id], lazy="joined")

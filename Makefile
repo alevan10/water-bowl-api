@@ -1,4 +1,4 @@
-.PHONY: start-postgres stop-postgres black lint
+.PHONY: start-postgres stop-postgres black lint isort
 POSTGRES_PASSWORD ?= postgres
 POSTGRES_USER ?= postgres
 start-postgres:
@@ -12,6 +12,9 @@ black:
 
 lint:
 	pylint -E -d C0301 src/waterbowl-api tests
+
+isort:
+	isort **/*.py
 
 build:
 		export WATER_BOWL_API_TAG=$(shell python version_checker.py --return-version)

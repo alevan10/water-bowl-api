@@ -4,7 +4,7 @@ from blueprint import waterbowl_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from enums import RAW_PICTURES_DIR, PICTURES_DIR
+from enums import PICTURES_DIR
 
 default_origins = [
     "http://levan.home",
@@ -15,8 +15,6 @@ default_origins = [
 
 
 def setup_local_files() -> None:
-    if not RAW_PICTURES_DIR.exists():
-        RAW_PICTURES_DIR.mkdir(parents=True)
     if not PICTURES_DIR.exists():
         PICTURES_DIR.mkdir(parents=True)
 

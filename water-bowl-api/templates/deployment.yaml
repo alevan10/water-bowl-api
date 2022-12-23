@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "waterbowl-api.fullname" . }}
   namespace: waterbowl
@@ -12,6 +12,20 @@ spec:
   selector:
     matchLabels:
       {{- include "waterbowl-api.selectorLabels" . | nindent 6 }}
+  volumeClaimTemplates:
+    - metadata:
+        {{- with .Values.podAnnotations }}
+        annotations:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        labels:
+          {{- include "waterbowl-api.selectorLabels" . | nindent 8 }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "nfs"
+        resources:
+          requests:
+            storage: 300Gi
   template:
     metadata:
       {{- with .Values.podAnnotations }}

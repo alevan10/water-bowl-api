@@ -49,10 +49,17 @@ Black:
     - python -m black . --check --verbose
 Lint_Dockerfile:
   stage: Static Analysis
+  retry: 1
   before_script: []
   image: hadolint/hadolint:latest-debian
   script:
     - hadolint src/docker/Dockerfile
+
+Isort:
+  stage: Static Analysis
+  retry: 1
+  script:
+    - isort **/*.py -c -v
 
 Unit:
   stage: Tests
@@ -94,8 +101,6 @@ Build:
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/src/docker/Dockerfile"
       --destination "levan.home:5000/water-bowl-api:${WATER_BOWL_API_VERSION}"
-      --build-arg PYPI_USER=$PYPI_USER
-      --build-arg PYPI_PASSWORD=$PYPI_PASSWORD
 
 Deploy:
   stage: Deploy

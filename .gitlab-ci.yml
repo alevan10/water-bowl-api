@@ -68,11 +68,11 @@ Isort:
   script:
     - isort **/*.py -c -v
 
-Unit:
-  stage: Tests
-  retry: 1
-  script:
-    - pytest -v ./tests/unit
+#Unit:
+#  stage: Tests
+#  retry: 1
+#  script:
+#    - pytest -v ./tests/unit
 
 
 Integration:

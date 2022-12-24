@@ -34,7 +34,7 @@ service:
 deployment:
   env:
     - name: "POSTGRES_ADDRESS"
-      value: "postgres-svc.postgres.cluster.local"
+      value: "postgres-svc.postgres.svc.cluster.local:5432"
     - name: "POSTGRES_DATABASE"
       value: "waterbowl"
     - name: "PICTURES_MODELING_DATA"

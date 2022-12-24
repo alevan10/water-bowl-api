@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/docker/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_ADDRESS: "postgres:5432"
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+  postgres:
+    image: "postgres:14.3"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+    ports:
+      - "5432:5432"

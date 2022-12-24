@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "waterbowl-api.fullname" . }}
+  namespace: waterbowl
+  labels:
+    {{- include "waterbowl-api.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "waterbowl-api.selectorLabels" . | nindent 6 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: "nfs-volume"
+        {{- with .Values.podAnnotations }}
+        annotations:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        labels:
+          {{- include "waterbowl-api.selectorLabels" . | nindent 8 }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "nfs"
+        resources:
+          requests:
+            storage: 300Gi
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "waterbowl-api.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: "waterbowl-api"
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- toYaml .Values.deployment.env | nindent 12 }}
+            - name: "POSTGRES_USER"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-login
+                  key: "POSTGRES_USER"
+            - name: "POSTGRES_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-login
+                  key: "POSTGRES_PASSWORD"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: "/waterbowl"
+              name: nfs-volume
+              readOnly: false
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,88 @@
+# Default values for horizons-api.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: levan.home:5000/water-bowl-api
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8003
+
+deployment:
+  env:
+    - name: "POSTGRES_ADDRESS"
+      value: "postgres-svc.postgres.cluster.local"
+    - name: "POSTGRES_DATABASE"
+      value: "waterbowl"
+    - name: "PICTURES_MODELING_DATA"
+      value: "pictures_modeling_data"
+    - name: "PICTURES_DIR"
+      value: "/waterbowl/pictures"
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: waterbowl-waterbowl-middleware@kubernetescrd
+    traefik.ingress.kubernetes.io/cors-allow-methods: POST
+  hosts:
+    - host: levan.home
+      paths:
+        - path: /api/waterbowl/v1
+          pathType: ImplementationSpecific
+  middleware:
+    prefix: "/api/waterbowl/v1"
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector:
+  beta.kubernetes.io/arch: arm64
+  kubernetes.io/arch: arm64
+
+tolerations: []
+
+affinity: {}

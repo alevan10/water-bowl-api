@@ -74,6 +74,10 @@ class TestRoutes:
         assert pictures_response_2.status_code == 200
         picture_1 = Picture(**pictures_response_1.json())
         picture_2 = Picture(**pictures_response_2.json())
-        assert [picture_1.picture_location, picture_2.picture_location] == [
+        saved_picture_locations = [picture_1.picture_location, picture_2.picture_location]
+        stored_pictures_locations = [
             str(picture_loc) for picture_loc in test_picture_storage.glob("*.jpeg")
         ]
+        assert len(saved_picture_locations) == len(stored_pictures_locations)
+        for picture_location in [picture_1.picture_location, picture_2.picture_location]:
+            assert picture_location in stored_pictures_locations

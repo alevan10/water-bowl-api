@@ -133,7 +133,7 @@ Deploy:
   retry: 1
   only:
     - main
-  image: alpine/helm:3.8.1
+  image: alpine/helm:3.10.2
   before_script: []
   script:
     - WATER_BOWL_API_VERSION=$(cat VERSION)

@@ -109,6 +109,25 @@ Build:
       --dockerfile "${CI_PROJECT_DIR}/src/docker/Dockerfile"
       --destination "levan.home:5000/water-bowl-api:${WATER_BOWL_API_VERSION}"
 
+Build-Latest:
+  stage: Build
+  retry: 1
+  only:
+    - main
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  before_script: []
+  script:
+    - mkdir -p /kaniko/.docker
+    - >-
+      /kaniko/executor
+      --insecure
+      --skip-tls-verify
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/src/docker/Dockerfile"
+      --destination "levan.home:5000/water-bowl-api:latest"
+
 Deploy:
   stage: Deploy
   retry: 1

@@ -41,13 +41,15 @@ deployment:
       value: "pictures_modeling_data"
     - name: "PICTURES_DIR"
       value: "/waterbowl/pictures"
+    - name: "PICTURES_TABLE"
+      value: "pictures"
 
 ingress:
   enabled: true
   className: ""
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: waterbowl-waterbowl-middleware@kubernetescrd
-    traefik.ingress.kubernetes.io/cors-allow-methods: POST
+    traefik.ingress.kubernetes.io/router.middlewares: waterbowl-water-bowl-api-waterbowl-api-middleware@kubernetescrd
+    traefik.ingress.kubernetes.io/cors-allow-methods: GET,POST
   hosts:
     - host: levan.home
       paths:

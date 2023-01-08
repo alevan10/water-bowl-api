@@ -31,14 +31,14 @@ async def health_endpoint() -> str:
     return "pong"
 
 
-@waterbowl_router.post("/pictures", response_model=models.Picture)
+@waterbowl_router.post("/pictures", response_model=models.Pictures)
 async def pictures_endpoint(
     db: AsyncSession = Depends(get_db),
     picture: UploadFile = File(),
     timestamp: float = Form(),
 ):
     picture_service = PictureService(db=db)
-    db_picture = await picture_service.create_picture(
+    db_picture = await picture_service.create_pictures(
         picture=picture, timestamp=timestamp
     )
     return db_picture

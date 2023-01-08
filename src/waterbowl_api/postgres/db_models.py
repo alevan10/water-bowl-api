@@ -44,14 +44,15 @@ class PictureMetadata(Base):
         }
 
 
-class Picture(Base):
+class Pictures(Base):
     __tablename__ = PICTURES_TABLE
     __table_args__ = {"keep_existing": True}
     __mapper_args__ = {"eager_defaults": True}
 
     id = Column(Integer, Identity(start=1, cycle=True), primary_key=True, index=True)
     metadata_id = Column(Integer, ForeignKey(f"{PICTURES_MODELING_DATA}.id"))
-    picture_location = Column(String)
+    waterbowl_picture = Column(String)
+    food_picture = Column(String)
     picture_timestamp = Column(DateTime)
 
     picture_metadata = relationship(
@@ -62,7 +63,8 @@ class Picture(Base):
         return {
             "id": self.id,
             "metadata_id": self.metadata_id,
-            "picture_location": self.picture_location,
+            "waterbowl_picture": self.waterbowl_picture,
+            "food_picture": self.food_picture,
             "picture_timestamp": self.picture_timestamp,
             "picture_metadata": self.picture_metadata.to_dict(),
         }

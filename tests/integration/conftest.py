@@ -10,7 +10,7 @@ from fastapi import UploadFile
 from sqlalchemy import Table
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from postgres.db_models import Picture, PictureMetadata
+from postgres.db_models import Pictures, PictureMetadata
 from postgres.database import Base
 from enums import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_ADDRESS, POSTGRES_DATABASE
 
@@ -57,22 +57,27 @@ async def postgres_tables(postgres_engine: AsyncConnection) -> tuple[Table, Tabl
 
 @pytest.fixture
 def add_picture(
-    postgres: AsyncSession, test_picture_file: Path
-) -> AsyncGenerator[Picture, None]:
-    file = test_picture_file
+    postgres: AsyncSession,
+    test_water_bowl_picture_file: Path,
+    test_food_bowl_picture_file: Path,
+) -> AsyncGenerator[Pictures, None]:
+    water_bowl = test_water_bowl_picture_file
+    food_bowl = test_food_bowl_picture_file
     now = datetime.now()
     session = postgres
 
     async def _add_picture(
-        picture_file: Path = file,
+        water_bowl: str = str(water_bowl),
+        food_bowl: str = str(food_bowl),
         timestamp: datetime = now,
     ):
         new_metadata = PictureMetadata()
         session.add(new_metadata)
         await session.commit()
-        new_picture = Picture(
+        new_picture = Pictures(
             metadata_id=new_metadata.id,
-            picture_location=f"{picture_file}",
+            waterbowl_picture=water_bowl,
+            food_picture=food_bowl,
             picture_timestamp=timestamp,
         )
         session.add(new_picture)
@@ -90,15 +95,15 @@ def get_picture(
     session = postgres_session
 
     async def _get_picture(picture_id: int):
-        return await session.get(Picture, picture_id)
+        return await session.get(Pictures, picture_id)
 
     yield _get_picture
 
 
 @pytest.fixture
-def picture_upload(test_picture_file):
-    with open(test_picture_file, "rb") as file_upload:
-        yield UploadFile(filename=test_picture_file.name, file=file_upload)
+def picture_upload(test_raw_picture_file):
+    with open(test_raw_picture_file, "rb") as file_upload:
+        yield UploadFile(filename=test_raw_picture_file.name, file=file_upload)
 
 
 @pytest.fixture

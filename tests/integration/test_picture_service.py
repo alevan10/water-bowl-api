@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
@@ -18,19 +19,21 @@ class TestPictureService:
         now,
         postgres,
         picture_upload,
-        test_picture_file,
         test_data_dir,
         test_picture_storage,
     ):
         picture_svc = PictureService(db=postgres)
-        test_picture = await picture_svc.create_picture(
+        test_picture = await picture_svc.create_pictures(
             picture=picture_upload, timestamp=now.timestamp()
         )
 
         stored_pictures = list(test_picture_storage.glob("*.jpeg"))
-        assert len(stored_pictures) == 1
-        stored_picture = stored_pictures[0]
-        assert str(stored_picture) == test_picture.picture_location
+        assert len(stored_pictures) == 2
+        for expected_picture in [
+            Path(test_picture.waterbowl_picture),
+            Path(test_picture.food_picture),
+        ]:
+            assert expected_picture in stored_pictures
         assert now == test_picture.picture_timestamp
         assert test_picture.id == 1
 
@@ -41,7 +44,6 @@ class TestPictureService:
         add_picture,
         postgres,
         picture_upload,
-        test_picture_file,
         test_data_dir,
     ):
         test_picture = await add_picture(timestamp=now)

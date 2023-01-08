@@ -26,7 +26,12 @@ async def save_pictures(
     new_images: list[Path] = []
     in_file_data = await in_file.read()
     for crop_window in [WATER_BOWL_CROP_WINDOW, FOOD_BOWL_CROP_WINDOW]:
-        filename = f"{timestamp}_{shortuuid.uuid()}.jpeg"
+        file_suffix = f"{timestamp}_{shortuuid.uuid()}.jpeg"
+        filename = (
+            f"water_{file_suffix}"
+            if crop_window == WATER_BOWL_CROP_WINDOW
+            else f"food_{file_suffix}"
+        )
         time = datetime.fromtimestamp(timestamp)
         raw_picture_path = PICTURES_DIR.joinpath(filename)
         async with aiofiles.open(raw_picture_path, "w+b") as out_file:

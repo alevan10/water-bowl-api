@@ -11,3 +11,15 @@ PICTURES_TABLE = os.environ.get("PICTURES_TABLE", "test_pictures")
 PICTURES_MODELING_DATA = os.environ.get(
     "PICTURES_MODELING_DATA", "test_pictures_modeling_data"
 )
+FOOD_BOWL_CROP_WINDOW = [
+    250,
+    450,
+    700,
+    700,
+]  # [crop_y, crop_x, crop_height, crop_width]
+WATER_BOWL_CROP_WINDOW = [
+    600,
+    1200,
+    700,
+    700,
+]  # [crop_y, crop_x, crop_height, crop_width]

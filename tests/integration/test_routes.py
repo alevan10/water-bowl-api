@@ -5,7 +5,7 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-from models import Picture
+from models import Pictures
 from postgres.database import get_db
 from waterbowl_api.app import app
 
@@ -37,30 +37,29 @@ class TestRoutes:
     async def test_upload_picture(
         self,
         test_client: AsyncClient,
-        test_picture_file: Path,
+        test_raw_picture_file: Path,
         test_picture_storage: Path,
     ):
-        with open(test_picture_file, "rb") as test_picture:
+        with open(test_raw_picture_file, "rb") as test_picture:
             data = {"timestamp": datetime.now().timestamp()}
             files = {"picture": test_picture}
             pictures_response = await test_client.post(
                 "/pictures", data=data, files=files
             )
         assert pictures_response.status_code == 200
-        picture = Picture(**pictures_response.json())
+        picture = Pictures(**pictures_response.json())
         assert picture.picture_timestamp.timestamp() == data.get("timestamp")
-        assert picture.picture_location == str(
-            next(test_picture_storage.glob("*.jpeg"))
-        )
+        for expected_picture in [picture.waterbowl_picture, picture.food_picture]:
+            assert Path(expected_picture) in test_picture_storage.glob("*.jpeg")
 
     @pytest.mark.asyncio
     async def test_multiple_uploads(
         self,
         test_client: AsyncClient,
-        test_picture_file: Path,
+        test_raw_picture_file: Path,
         test_picture_storage: Path,
     ):
-        with open(test_picture_file, "rb") as test_picture:
+        with open(test_raw_picture_file, "rb") as test_picture:
             data = {"timestamp": datetime.now().timestamp()}
             files = {"picture": test_picture}
             pictures_response_1 = await test_client.post(
@@ -72,18 +71,22 @@ class TestRoutes:
             )
         assert pictures_response_1.status_code == 200
         assert pictures_response_2.status_code == 200
-        picture_1 = Picture(**pictures_response_1.json())
-        picture_2 = Picture(**pictures_response_2.json())
+        picture_1 = Pictures(**pictures_response_1.json())
+        picture_2 = Pictures(**pictures_response_2.json())
         saved_picture_locations = [
-            picture_1.picture_location,
-            picture_2.picture_location,
+            picture_1.waterbowl_picture,
+            picture_1.food_picture,
+            picture_2.waterbowl_picture,
+            picture_2.food_picture,
         ]
         stored_pictures_locations = [
             str(picture_loc) for picture_loc in test_picture_storage.glob("*.jpeg")
         ]
         assert len(saved_picture_locations) == len(stored_pictures_locations)
         for picture_location in [
-            picture_1.picture_location,
-            picture_2.picture_location,
+            picture_1.waterbowl_picture,
+            picture_1.food_picture,
+            picture_2.waterbowl_picture,
+            picture_2.food_picture,
         ]:
             assert picture_location in stored_pictures_locations

@@ -3,9 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class Picture(BaseModel):
+class Pictures(BaseModel):
     id: int
-    picture_location: str
+    waterbowl_picture: str
+    food_picture: str
     picture_timestamp: datetime
 
     class Config:

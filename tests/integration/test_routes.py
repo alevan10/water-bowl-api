@@ -97,15 +97,11 @@ class TestRoutes:
 
     @pytest.mark.asyncio
     async def test_get_random_picture(
-        self,
-        test_client: AsyncClient,
-        add_picture: AsyncGenerator[DBPicture, None]
+        self, test_client: AsyncClient, add_picture: AsyncGenerator[DBPicture, None]
     ):
         test_picture = await add_picture()
         params = {"pictureType": f"{PictureType.WATER_BOWL}"}
-        pictures_response = await test_client.get(
-            "/pictures/", params=params
-        )
+        pictures_response = await test_client.get("/pictures/", params=params)
         returned_picture = json.loads(pictures_response.headers.get("PictureMetadata"))
         assert returned_picture["id"] == test_picture.id
 
@@ -118,18 +114,16 @@ class TestRoutes:
         test_picture = await add_picture(human_water_yes=1)
         test_other_picture = await add_picture()
         params = {"limit": f"{PictureRetrieveLimits.HUMAN_ANNOTATED}"}
-        pictures_response = await test_client.get(
-            "/pictures/", params=params
-        )
+        pictures_response = await test_client.get("/pictures/", params=params)
         returned_picture = json.loads(pictures_response.headers.get("PictureMetadata"))
         assert returned_picture["id"] == test_picture.id
 
         # Just to satisfy ourselves that there are other pictures in the DB, try and get one
         request_try = 0
         while returned_picture["id"] != test_other_picture.id and request_try < 5:
-            pictures_response = await test_client.get(
-                "/pictures/", params=params
+            pictures_response = await test_client.get("/pictures/", params=params)
+            returned_picture = json.loads(
+                pictures_response.headers.get("PictureMetadata")
             )
-            returned_picture = json.loads(pictures_response.headers.get("PictureMetadata"))
             request_try = request_try + 1
         assert returned_picture["id"] == test_other_picture.id

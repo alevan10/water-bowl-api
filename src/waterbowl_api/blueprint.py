@@ -57,26 +57,35 @@ async def get_random_picture_endpoint(
 ) -> FileResponse:
     picture_service = PictureService(db=db)
     random_picture: DBPicture = await picture_service.get_random_picture(limit=limit)
-    file = random_picture.waterbowl_picture if picture_type == PictureType.WATER_BOWL else random_picture.food_picture
-    return FileResponse(file, headers={"PictureMetadata": json.dumps(random_picture.to_dict())})
+    file = (
+        random_picture.waterbowl_picture
+        if picture_type == PictureType.WATER_BOWL
+        else random_picture.food_picture
+    )
+    return FileResponse(
+        file, headers={"PictureMetadata": json.dumps(random_picture.to_dict())}
+    )
 
 
 @waterbowl_router.get("/pictures/{picture_id}/", response_model=models.Picture)
 async def get_picture_endpoint(
-    picture_id: int = Path(),
-    db: AsyncSession = Depends(get_db)
+    picture_id: int = Path(), db: AsyncSession = Depends(get_db)
 ) -> models.Picture:
     picture_service = PictureService(db=db)
     picture: DBPicture = await picture_service.get_picture(picture_id)
     return picture
 
 
-@waterbowl_router.patch("/pictures/{metadata_id}/", response_model=models.PictureMetadata)
+@waterbowl_router.patch(
+    "/pictures/{metadata_id}/", response_model=models.PictureMetadata
+)
 async def update_picture_endpoint(
     update_request: models.PictureUpdateRequest,
     metadata_id: int = Path(),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> models.PictureMetadata:
     picture_service = PictureService(db=db)
-    picture: DBPicture = await picture_service.update_metadata(metadata_id, updates=update_request)
+    picture: DBPicture = await picture_service.update_metadata(
+        metadata_id, updates=update_request
+    )
     return picture.picture_metadata

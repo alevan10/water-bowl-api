@@ -122,7 +122,7 @@ def add_multiple_pictures(
         water_bowl: str = str(water_bowl),
         food_bowl: str = str(food_bowl),
         timestamp: datetime = now,
-        num_pictures: int = 5
+        num_pictures: int = 5,
     ):
         new_pictures = []
         for i in range(0, num_pictures):

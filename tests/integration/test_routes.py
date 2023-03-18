@@ -1,12 +1,16 @@
+import json
 from datetime import datetime
 from pathlib import Path
+from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-from models import Pictures
+from enums import PictureType, PictureRetrieveLimits
+from models import Picture
 from postgres.database import get_db
+from postgres.db_models import DBPicture
 from waterbowl_api.app import app
 
 
@@ -44,10 +48,10 @@ class TestRoutes:
             data = {"timestamp": datetime.now().timestamp()}
             files = {"picture": test_picture}
             pictures_response = await test_client.post(
-                "/pictures", data=data, files=files
+                "/pictures/", data=data, files=files
             )
         assert pictures_response.status_code == 200
-        picture = Pictures(**pictures_response.json())
+        picture = Picture(**pictures_response.json())
         assert picture.picture_timestamp.timestamp() == data.get("timestamp")
         for expected_picture in [picture.waterbowl_picture, picture.food_picture]:
             assert Path(expected_picture) in test_picture_storage.glob("*.jpeg")
@@ -63,16 +67,16 @@ class TestRoutes:
             data = {"timestamp": datetime.now().timestamp()}
             files = {"picture": test_picture}
             pictures_response_1 = await test_client.post(
-                "/pictures", data=data, files=files
+                "/pictures/", data=data, files=files
             )
             data = {"timestamp": datetime.now().timestamp()}
             pictures_response_2 = await test_client.post(
-                "/pictures", data=data, files=files
+                "/pictures/", data=data, files=files
             )
         assert pictures_response_1.status_code == 200
         assert pictures_response_2.status_code == 200
-        picture_1 = Pictures(**pictures_response_1.json())
-        picture_2 = Pictures(**pictures_response_2.json())
+        picture_1 = Picture(**pictures_response_1.json())
+        picture_2 = Picture(**pictures_response_2.json())
         saved_picture_locations = [
             picture_1.waterbowl_picture,
             picture_1.food_picture,
@@ -90,3 +94,42 @@ class TestRoutes:
             picture_2.food_picture,
         ]:
             assert picture_location in stored_pictures_locations
+
+    @pytest.mark.asyncio
+    async def test_get_random_picture(
+        self,
+        test_client: AsyncClient,
+        add_picture: AsyncGenerator[DBPicture, None]
+    ):
+        test_picture = await add_picture()
+        params = {"pictureType": f"{PictureType.WATER_BOWL}"}
+        pictures_response = await test_client.get(
+            "/pictures/", params=params
+        )
+        returned_picture = json.loads(pictures_response.headers.get("PictureMetadata"))
+        assert returned_picture["id"] == test_picture.id
+
+    @pytest.mark.asyncio
+    async def test_get_random_picture_with_limit(
+        self,
+        test_client: AsyncClient,
+        add_picture: AsyncGenerator[DBPicture, None],
+    ):
+        test_picture = await add_picture(human_water_yes=1)
+        test_other_picture = await add_picture()
+        params = {"limit": f"{PictureRetrieveLimits.HUMAN_ANNOTATED}"}
+        pictures_response = await test_client.get(
+            "/pictures/", params=params
+        )
+        returned_picture = json.loads(pictures_response.headers.get("PictureMetadata"))
+        assert returned_picture["id"] == test_picture.id
+
+        # Just to satisfy ourselves that there are other pictures in the DB, try and get one
+        request_try = 0
+        while returned_picture["id"] != test_other_picture.id and request_try < 5:
+            pictures_response = await test_client.get(
+                "/pictures/", params=params
+            )
+            returned_picture = json.loads(pictures_response.headers.get("PictureMetadata"))
+            request_try = request_try + 1
+        assert returned_picture["id"] == test_other_picture.id

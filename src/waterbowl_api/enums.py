@@ -34,3 +34,6 @@ class PictureType(str, Enum):
 class PictureRetrieveLimits(str, Enum):
     HUMAN_ANNOTATED = "human_annotated"
     NO_ANNOTATION = "no_annotation"
+
+    def __str__(self) -> str:
+        return str(self.value)

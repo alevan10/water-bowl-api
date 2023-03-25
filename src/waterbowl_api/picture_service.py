@@ -122,8 +122,8 @@ class PictureService:
                     select(DBPicture)
                     .filter(
                         or_(
-                            DBPictureMetadata.human_water_yes != 0,
-                            DBPictureMetadata.human_water_no != 0,
+                            DBPictureMetadata.human_water_yes > 0,
+                            DBPictureMetadata.human_water_no > 0,
                         )
                     )
                     .order_by(func.random())

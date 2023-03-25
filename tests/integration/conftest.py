@@ -30,7 +30,7 @@ def event_loop():
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture
 async def postgres_connection() -> AsyncConnection:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -39,7 +39,7 @@ async def postgres_connection() -> AsyncConnection:
         await conn.close()
 
 
-@pytest_asyncio.fixture(scope="function")
+@pytest_asyncio.fixture
 async def postgres(postgres_connection) -> AsyncSession:
     db = TestingSession(bind=postgres_connection)
     yield db
@@ -65,6 +65,7 @@ def add_picture(
     food_bowl = test_food_bowl_picture_file
     now = datetime.now()
     session = postgres
+    created_pictures = []
 
     async def _add_picture(
         water_bowl: str = str(water_bowl),
@@ -99,12 +100,16 @@ def add_picture(
             food_picture=food_bowl,
             picture_timestamp=timestamp,
         )
+        created_pictures.append(new_picture)
         session.add(new_picture)
         await session.commit()
         await session.refresh(new_picture)
         return new_picture
 
     yield _add_picture
+    if created_pictures:
+        for picture in created_pictures:
+            session.sync_session.delete(picture)
 
 
 @pytest.fixture
@@ -117,6 +122,7 @@ def add_multiple_pictures(
     food_bowl = test_food_bowl_picture_file
     now = datetime.now()
     session = postgres
+    created_pictures = []
 
     async def _add_pictures(
         water_bowl: str = str(water_bowl),
@@ -135,6 +141,7 @@ def add_multiple_pictures(
                 food_picture=food_bowl,
                 picture_timestamp=timestamp,
             )
+            created_pictures.append(new_picture)
             session.add(new_picture)
             await session.commit()
             await session.refresh(new_picture)
@@ -142,6 +149,9 @@ def add_multiple_pictures(
         return new_pictures
 
     yield _add_pictures
+    if created_pictures:
+        for picture in created_pictures:
+            session.sync_session.delete(picture)
 
 
 @pytest.fixture

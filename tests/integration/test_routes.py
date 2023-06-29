@@ -129,3 +129,29 @@ class TestRoutes:
             request_try = request_try + 1
         # TODO: Filters aren't working correctly, but for not that's not a deal breaker
         assert returned_picture["id"]
+
+    @pytest.mark.asyncio
+    async def test_get_single_picture(
+        self,
+        test_client: AsyncClient,
+        add_picture: AsyncGenerator[DBPicture, None],
+    ):
+        test_picture: DBPicture = await add_picture()
+        # Add a second picture to confirm this isn't flakey
+        await add_picture()
+        pictures_response = await test_client.get(f"/pictures/{test_picture.id}/")
+        returned_picture = pictures_response.json()
+        assert returned_picture["id"] == test_picture.id
+
+    @pytest.mark.asyncio
+    async def test_update_picture(
+        self,
+        test_client: AsyncClient,
+        add_picture: AsyncGenerator[DBPicture, None],
+    ):
+        test_picture = await add_picture()
+        pictures_response = await test_client.patch(
+            f"/pictures/{test_picture.id}/", json={"human_water_yes": 1}
+        )
+        returned_picture = pictures_response.json()
+        assert returned_picture["id"] == test_picture.id

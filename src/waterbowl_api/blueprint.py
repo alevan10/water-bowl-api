@@ -13,7 +13,7 @@ from picture_service import PictureService
 from fastapi import APIRouter, Depends, Form, File, UploadFile, Path
 from fastapi.responses import FileResponse
 from postgres.database import get_db, engine, Base
-from postgres.db_models import DBPicture
+from postgres.db_models import DBPicture, DBPictureMetadata
 
 waterbowl_router = APIRouter()
 
@@ -76,16 +76,13 @@ async def get_picture_endpoint(
     return picture
 
 
-@waterbowl_router.patch(
-    "/pictures/{metadata_id}/", response_model=models.PictureMetadata
-)
+@waterbowl_router.patch("/pictures/{picture_id}/", response_model=models.Picture)
 async def update_picture_endpoint(
     update_request: models.PictureUpdateRequest,
-    metadata_id: int = Path(),
+    picture_id: int = Path(),
     db: AsyncSession = Depends(get_db),
-) -> models.PictureMetadata:
+) -> models.Picture:
     picture_service = PictureService(db=db)
-    picture: DBPicture = await picture_service.update_metadata(
-        metadata_id, updates=update_request
-    )
-    return picture.picture_metadata
+    picture: DBPicture = await picture_service.get_picture(picture_id=picture_id)
+    await picture_service.update_metadata(picture.metadata_id, updates=update_request)
+    return picture

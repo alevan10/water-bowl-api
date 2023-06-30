@@ -40,7 +40,7 @@ Pylint:
   stage: Static Analysis
   retry: 1
   script:
-    - pylint -E -d C0301 src/waterbowl_api tests
+    - make lint
 
 Black:
   stage: Static Analysis

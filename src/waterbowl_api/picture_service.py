@@ -102,7 +102,9 @@ class PictureService:
         return picture
 
     async def get_random_picture(self, limit: PictureRetrieveLimits = None):
-        statement = select(DBPicture).order_by(func.random()).limit(1)
+        statement = (
+            select(DBPicture).order_by(func.random()).limit(1)
+        )  # pylint: disable=not-callable
         if limit:
             if limit == PictureRetrieveLimits.NO_ANNOTATION:
                 statement = (
@@ -113,7 +115,7 @@ class PictureService:
                             DBPictureMetadata.human_water_no == 0,
                         )
                     )
-                    .order_by(func.random())
+                    .order_by(func.random())  # pylint: disable=not-callable
                     .limit(1)
                 )
             if limit == PictureRetrieveLimits.HUMAN_ANNOTATED:
@@ -125,7 +127,7 @@ class PictureService:
                             DBPictureMetadata.human_water_no > 0,
                         )
                     )
-                    .order_by(func.random())
+                    .order_by(func.random())  # pylint: disable=not-callable
                     .limit(1)
                 )
         result: Result = await self._db.execute(statement)

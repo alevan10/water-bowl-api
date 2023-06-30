@@ -2,24 +2,23 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Union
-import tensorflow as tf
+
 import aiofiles
 import shortuuid
-from fastapi import UploadFile
-from sqlalchemy import select, func, and_, or_, update
-from sqlalchemy.engine import Result
-from sqlalchemy.ext.asyncio import AsyncSession
-
+import tensorflow as tf
 from enums import (
+    FOOD_BOWL_CROP_WINDOW,
     PICTURES_DIR,
     WATER_BOWL_CROP_WINDOW,
-    FOOD_BOWL_CROP_WINDOW,
-    PictureType,
-    PICTURES_MODELING_DATA,
     PictureRetrieveLimits,
 )
+from fastapi import UploadFile
 from models import PictureUpdateRequest
 from postgres.db_models import DBPicture, DBPictureMetadata
+from sqlalchemy import and_, or_, select, update
+from sqlalchemy.engine import Result
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.expression import func
 
 logger = logging.getLogger(__name__)
 

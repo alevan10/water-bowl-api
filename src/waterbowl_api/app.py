@@ -1,10 +1,9 @@
 import os
 
 from blueprint import waterbowl_router
+from enums import PICTURES_DIR
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from enums import PICTURES_DIR
 
 default_origins = [
     "http://levan.home",

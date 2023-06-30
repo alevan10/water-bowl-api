@@ -1,16 +1,7 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DateTime,
-    Identity,
-    Boolean,
-    ForeignKey,
-)
-from sqlalchemy.orm import relationship
-
-from enums import PICTURES_TABLE, PICTURES_MODELING_DATA
+from enums import PICTURES_MODELING_DATA, PICTURES_TABLE
 from postgres.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Identity, Integer, String
+from sqlalchemy.orm import relationship
 
 
 class DBPictureMetadata(Base):

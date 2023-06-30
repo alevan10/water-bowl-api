@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-
 from enums import PictureRetrieveLimits
 from models import PictureUpdateRequest
 from picture_service import PictureService

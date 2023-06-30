@@ -6,13 +6,13 @@ from unittest import mock
 
 import pytest
 import pytest_asyncio
+from enums import POSTGRES_ADDRESS, POSTGRES_DATABASE, POSTGRES_PASSWORD, POSTGRES_USER
 from fastapi import UploadFile
+from postgres.database import Base
+from postgres.db_models import DBPicture, DBPictureMetadata
 from sqlalchemy import Table
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from postgres.db_models import DBPicture, DBPictureMetadata
-from postgres.database import Base
-from enums import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_ADDRESS, POSTGRES_DATABASE
 
 database_uri = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}/{POSTGRES_DATABASE}"
 engine = create_async_engine(database_uri)

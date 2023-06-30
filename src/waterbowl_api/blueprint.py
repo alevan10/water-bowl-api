@@ -4,16 +4,14 @@ import os
 from typing import Optional
 
 import aiofiles
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import models
-from enums import PictureType, PictureRetrieveLimits
-from picture_service import PictureService
-
-from fastapi import APIRouter, Depends, Form, File, UploadFile, Path
+from enums import PictureRetrieveLimits, PictureType
+from fastapi import APIRouter, Depends, File, Form, Path, UploadFile
 from fastapi.responses import FileResponse
-from postgres.database import get_db, engine, Base
+from picture_service import PictureService
+from postgres.database import Base, engine, get_db
 from postgres.db_models import DBPicture, DBPictureMetadata
+from sqlalchemy.ext.asyncio import AsyncSession
 
 waterbowl_router = APIRouter()
 

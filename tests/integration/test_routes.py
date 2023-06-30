@@ -5,12 +5,12 @@ from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
+from enums import PictureRetrieveLimits, PictureType
 from httpx import AsyncClient
-
-from enums import PictureType, PictureRetrieveLimits
 from models import Picture
 from postgres.database import get_db
 from postgres.db_models import DBPicture
+
 from waterbowl_api.app import app
 
 
@@ -150,8 +150,14 @@ class TestRoutes:
         add_picture: AsyncGenerator[DBPicture, None],
     ):
         test_picture = await add_picture()
+        assert test_picture.picture_metadata.human_water_yes == 0
         pictures_response = await test_client.patch(
             f"/pictures/{test_picture.id}/", json={"human_water_yes": 1}
         )
         returned_picture = pictures_response.json()
         assert returned_picture["id"] == test_picture.id
+        assert test_picture.picture_metadata.human_water_yes == 1
+        _ = await test_client.patch(
+            f"/pictures/{test_picture.id}/", json={"human_water_yes": 3}
+        )
+        assert test_picture.picture_metadata.human_water_yes == 4

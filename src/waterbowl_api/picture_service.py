@@ -103,8 +103,10 @@ class PictureService:
 
     async def get_random_picture(self, limit: PictureRetrieveLimits = None):
         statement = (
-            select(DBPicture).order_by(func.random()).limit(1)
-        )  # pylint: disable=not-callable
+            select(DBPicture)
+            .order_by(func.random())  # pylint: disable=not-callable
+            .limit(1)
+        )
         if limit:
             if limit == PictureRetrieveLimits.NO_ANNOTATION:
                 statement = (

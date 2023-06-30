@@ -14,7 +14,7 @@ check-black:
 	python -m black . --check --verbose
 
 lint:
-	pylint -E -d C0301 src/waterbowl-api tests
+	pylint -E -d C0301 src/waterbowl_api tests
 
 isort:
 	isort --profile black .

@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent.parent
@@ -23,3 +24,16 @@ WATER_BOWL_CROP_WINDOW = [
     700,
     700,
 ]  # [crop_y, crop_x, crop_height, crop_width]
+
+
+class PictureType(str, Enum):
+    WATER_BOWL = "water_bowl"
+    FOOD_BOWL = "food_bowl"
+
+
+class PictureRetrieveLimits(str, Enum):
+    HUMAN_ANNOTATED = "human_annotated"
+    NO_ANNOTATION = "no_annotation"
+
+    def __str__(self) -> str:
+        return str(self.value)

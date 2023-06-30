@@ -1,19 +1,10 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    DateTime,
-    Identity,
-    Boolean,
-    ForeignKey,
-)
+from enums import PICTURES_MODELING_DATA, PICTURES_TABLE
+from postgres.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Identity, Integer, String
 from sqlalchemy.orm import relationship
 
-from enums import PICTURES_TABLE, PICTURES_MODELING_DATA
-from postgres.database import Base
 
-
-class PictureMetadata(Base):
+class DBPictureMetadata(Base):
     __tablename__ = PICTURES_MODELING_DATA
     __table_args__ = {"keep_existing": True}
     __mapper_args__ = {"eager_defaults": True}
@@ -44,7 +35,7 @@ class PictureMetadata(Base):
         }
 
 
-class Pictures(Base):
+class DBPicture(Base):
     __tablename__ = PICTURES_TABLE
     __table_args__ = {"keep_existing": True}
     __mapper_args__ = {"eager_defaults": True}
@@ -56,7 +47,7 @@ class Pictures(Base):
     picture_timestamp = Column(DateTime)
 
     picture_metadata = relationship(
-        "PictureMetadata", foreign_keys=[metadata_id], lazy="joined"
+        "DBPictureMetadata", foreign_keys=[metadata_id], lazy="joined"
     )
 
     def to_dict(self):
@@ -65,6 +56,6 @@ class Pictures(Base):
             "metadata_id": self.metadata_id,
             "waterbowl_picture": self.waterbowl_picture,
             "food_picture": self.food_picture,
-            "picture_timestamp": self.picture_timestamp,
+            "picture_timestamp": str(self.picture_timestamp),
             "picture_metadata": self.picture_metadata.to_dict(),
         }

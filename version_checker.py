@@ -2,10 +2,9 @@ import asyncio
 import sys
 from functools import wraps
 from pathlib import Path
+
 import aiohttp
-
 import click
-
 
 version_file = Path(__file__).parent.joinpath("VERSION")
 

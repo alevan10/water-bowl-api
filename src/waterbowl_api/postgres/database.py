@@ -1,7 +1,6 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
-
-from enums import POSTGRES_ADDRESS, POSTGRES_DATABASE, POSTGRES_USER, POSTGRES_PASSWORD
+from enums import POSTGRES_ADDRESS, POSTGRES_DATABASE, POSTGRES_PASSWORD, POSTGRES_USER
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 database_url = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}/{POSTGRES_DATABASE}"
 

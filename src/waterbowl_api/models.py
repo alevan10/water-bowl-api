@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
 
-class Pictures(BaseModel):
+class Picture(BaseModel):
     id: int
     waterbowl_picture: str
     food_picture: str
@@ -28,3 +29,12 @@ class PictureMetadata(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class PictureUpdateRequest(BaseModel):
+    human_cat_yes: Optional[int] = 0
+    human_water_yes: Optional[int] = 0
+    human_food_yes: Optional[int] = 0
+    human_cat_no: Optional[int] = 0
+    human_water_no: Optional[int] = 0
+    human_food_no: Optional[int] = 0

@@ -28,12 +28,12 @@ def test_raw_picture_file(test_data_dir) -> Path:
 
 @pytest.fixture
 def test_water_bowl_picture_file(test_data_dir) -> Path:
-    yield test_data_dir.joinpath("water-bowl.jpg")
+    yield test_data_dir.joinpath("water-bowl.jpeg")
 
 
 @pytest.fixture
 def test_food_bowl_picture_file(test_data_dir) -> Path:
-    yield test_data_dir.joinpath("food-bowl.jpg")
+    yield test_data_dir.joinpath("food-bowl.jpeg")
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-.PHONY: start-postgres stop-postgres black lint isort run-local stop-local push-prod
+.PHONY: start-postgres stop-postgres black lint isort run-local stop-local push-prod check-isort check-black
 POSTGRES_PASSWORD ?= postgres
 POSTGRES_USER ?= postgres
 start-postgres:
@@ -10,11 +10,17 @@ stop-postgres:
 black:
 	python -m black .
 
+check-black:
+	python -m black . --check --verbose
+
 lint:
-	pylint -E -d C0301 src/waterbowl-api tests
+	pylint -E -d C0301 src/waterbowl_api tests
 
 isort:
-	isort **/*.py
+	isort --profile black .
+
+check-isort:
+	isort --profile black -c -v .
 
 build:
 	docker buildx build -f src/docker/Dockerfile --platform linux/amd64 --tag levan.home:5000/water-bowl-api:$(shell python version_checker.py --return-version) --load .

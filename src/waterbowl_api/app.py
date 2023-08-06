@@ -10,6 +10,7 @@ default_origins = [
     "https://levan.home",
     "http://localhost",
     "http://localhost:8080",
+    "http://localhost:8081",
 ]
 
 
@@ -28,6 +29,7 @@ def create_app() -> FastAPI:
         allow_origins=default_origins,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["PictureMetadata"],
     )
     return picture_app
 

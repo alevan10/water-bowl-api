@@ -42,6 +42,11 @@ If you wish to try running this code yourself create a virtual environment and r
 pip3 install -r requirements
 ```
 
+## Development
+
+This project can be run locally with a dockerized postgres instance for storage, or in a docker-compose network.
+In either case, it's recommended to manually add an image via a POST request to `localhost:8080/pictures/` if you plan on running this alongside the UI for development.
+
 ## Contributing
 Please feel free to fork this repository as you wish! As I said earlier, this repo is mirrored from a locally managed GitLab instance,
 so I can't accept PRs here. However, feel free to generate issues if you'd like, and we can discuss implementation ideas there.

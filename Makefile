@@ -27,7 +27,7 @@ build:
 	docker buildx build -f src/docker/Dockerfile --platform linux/arm64 --tag levan.home:5000/water-bowl-api:$(shell python version_checker.py --return-version) --load .
 
 run-local:
-	docker compose up -d
+	docker compose up --build -d
 
 stop-local:
 	docker compose down

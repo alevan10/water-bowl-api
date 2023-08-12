@@ -1,4 +1,5 @@
 from enums import PICTURES_MODELING_DATA, PICTURES_TABLE
+from models import PictureMetadata
 from postgres.database import Base
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Identity, Integer, String
 from sqlalchemy.orm import relationship
@@ -33,6 +34,12 @@ class DBPictureMetadata(Base):
             "human_water_no": self.human_water_no,
             "human_food_no": self.human_food_no,
         }
+
+    def to_api_return(self, picture_id: int) -> PictureMetadata:
+        return PictureMetadata(
+            **self.to_dict(),
+            picture_id=picture_id
+        )
 
 
 class DBPicture(Base):

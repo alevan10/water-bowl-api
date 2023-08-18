@@ -4,7 +4,9 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 database_url = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}/{POSTGRES_DATABASE}"
 
-engine = create_async_engine(database_url)
+engine = create_async_engine(database_url).execution_options(
+    isolation_level="AUTOCOMMIT"
+)
 
 AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 

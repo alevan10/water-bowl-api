@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, Path, UploadFile
 from fastapi.responses import FileResponse
 from picture_service import PictureService
 from postgres.database import Base, engine, get_db
-from postgres.db_models import DBPicture
+from postgres.db_models import DBPicture, DBPictureMetadata
 from sqlalchemy.ext.asyncio import AsyncSession
 
 waterbowl_router = APIRouter()
@@ -71,6 +71,20 @@ async def get_picture_endpoint(
     picture_service = PictureService(db=db)
     picture: DBPicture = await picture_service.get_picture(picture_id)
     return picture
+
+
+@waterbowl_router.get(
+    "/pictures/{picture_id}/metadata/", response_model=models.PictureMetadata
+)
+async def get_picture_metadata(
+    picture_id: int = Path(), db: AsyncSession = Depends(get_db)
+) -> models.PictureMetadata:
+    picture_service = PictureService(db=db)
+    picture: DBPicture = await picture_service.get_picture(picture_id)
+    picture_metadata: DBPictureMetadata = await picture_service.get_metadata(
+        picture.metadata_id
+    )
+    return picture_metadata.to_api_return(picture_id)
 
 
 @waterbowl_router.patch("/pictures/{picture_id}/", response_model=models.Picture)

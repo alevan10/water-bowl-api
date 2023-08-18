@@ -73,13 +73,17 @@ async def get_picture_endpoint(
     return picture
 
 
-@waterbowl_router.get("/pictures/{picture_id}/metadata/", response_model=models.PictureMetadata)
+@waterbowl_router.get(
+    "/pictures/{picture_id}/metadata/", response_model=models.PictureMetadata
+)
 async def get_picture_metadata(
     picture_id: int = Path(), db: AsyncSession = Depends(get_db)
 ) -> models.PictureMetadata:
     picture_service = PictureService(db=db)
     picture: DBPicture = await picture_service.get_picture(picture_id)
-    picture_metadata: DBPictureMetadata = await picture_service.get_metadata(picture.metadata_id)
+    picture_metadata: DBPictureMetadata = await picture_service.get_metadata(
+        picture.metadata_id
+    )
     return picture_metadata.to_api_return(picture_id)
 
 

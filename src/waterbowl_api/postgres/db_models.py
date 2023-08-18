@@ -36,10 +36,7 @@ class DBPictureMetadata(Base):
         }
 
     def to_api_return(self, picture_id: int) -> PictureMetadata:
-        return PictureMetadata(
-            **self.to_dict(),
-            picture_id=picture_id
-        )
+        return PictureMetadata(**self.to_dict(), picture_id=picture_id)
 
 
 class DBPicture(Base):

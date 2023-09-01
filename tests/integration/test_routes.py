@@ -161,3 +161,12 @@ class TestRoutes:
             f"/pictures/{test_picture.id}/", json={"human_water_yes": 3}
         )
         assert test_picture.picture_metadata.human_water_yes == 4
+
+    @pytest.mark.asyncio
+    async def test_get_single_picture_returns_404(
+        self,
+        test_client: AsyncClient,
+        add_picture: AsyncGenerator[DBPicture, None],
+    ):
+        pictures_response = await test_client.get(f"/pictures/0/")
+        assert pictures_response.status_code == 404

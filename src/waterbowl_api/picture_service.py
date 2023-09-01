@@ -98,7 +98,10 @@ class PictureService:
         picture: DBPicture = await self._get_single_item(
             item_type=DBPicture, item_id=picture_id
         )
-        logger.debug("Picture retrieved", extra=picture.to_dict())
+        if picture:
+            logger.debug("Picture retrieved", extra=picture.to_dict())
+        else:
+            logger.debug("No picture found with id %s", picture_id)
         return picture
 
     async def get_random_picture(self, limit: PictureRetrieveLimits = None):
@@ -110,7 +113,8 @@ class PictureService:
         if limit:
             if limit == PictureRetrieveLimits.NO_ANNOTATION:
                 statement = (
-                    select(DBPicture)
+                    select(DBPicture, DBPictureMetadata)
+                    .join(DBPicture.picture_metadata)
                     .filter(
                         and_(
                             DBPictureMetadata.human_water_yes == 0,
@@ -122,19 +126,22 @@ class PictureService:
                 )
             if limit == PictureRetrieveLimits.HUMAN_ANNOTATED:
                 statement = (
-                    select(DBPicture)
+                    select(DBPicture, DBPictureMetadata)
+                    .join(DBPicture.picture_metadata)
                     .filter(
                         or_(
-                            DBPictureMetadata.human_water_yes > 0,
-                            DBPictureMetadata.human_water_no > 0,
+                            DBPictureMetadata.human_water_yes == 0,
+                            DBPictureMetadata.human_water_no == 0,
                         )
                     )
                     .order_by(func.random())  # pylint: disable=not-callable
                     .limit(1)
                 )
         result: Result = await self._db.execute(statement)
-        picture = result.fetchone()[0]
-        return picture
+        if pictures := result.fetchone():
+            picture = pictures[0]
+            return picture
+        return None
 
     async def update_metadata(
         self, metadata_id: int, updates: PictureUpdateRequest

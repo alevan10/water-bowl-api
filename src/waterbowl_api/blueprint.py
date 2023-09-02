@@ -1,11 +1,12 @@
 import json
 import logging
 import os
+from pathlib import Path as FilePath
 from typing import Optional
 
 import models
 from enums import PictureRetrieveLimits, PictureType
-from fastapi import APIRouter, Depends, File, Form, Path, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile
 from fastapi.responses import FileResponse
 from picture_service import PictureService
 from postgres.database import Base, engine, get_db
@@ -54,14 +55,20 @@ async def get_random_picture_endpoint(
 ) -> FileResponse:
     picture_service = PictureService(db=db)
     random_picture: DBPicture = await picture_service.get_random_picture(limit=limit)
-    file = (
-        random_picture.waterbowl_picture
-        if picture_type == PictureType.WATER_BOWL
-        else random_picture.food_picture
-    )
-    return FileResponse(
-        file, headers={"PictureMetadata": json.dumps(random_picture.to_dict())}
-    )
+    if random_picture:
+        file = (
+            FilePath(random_picture.waterbowl_picture)
+            if picture_type == PictureType.WATER_BOWL
+            else FilePath(random_picture.food_picture)
+        )
+        if file.exists():
+            return FileResponse(
+                file, headers={"PictureMetadata": json.dumps(random_picture.to_dict())}
+            )
+        raise HTTPException(
+            status_code=404, detail="No picture file associated with this picture ID."
+        )
+    raise HTTPException(status_code=404, detail="No items found with given limit.")
 
 
 @waterbowl_router.get("/pictures/{picture_id}/", response_model=models.Picture)
@@ -70,7 +77,9 @@ async def get_picture_endpoint(
 ) -> models.Picture:
     picture_service = PictureService(db=db)
     picture: DBPicture = await picture_service.get_picture(picture_id)
-    return picture
+    if picture:
+        return picture
+    raise HTTPException(status_code=404, detail="Item not found")
 
 
 @waterbowl_router.get(
@@ -81,10 +90,12 @@ async def get_picture_metadata(
 ) -> models.PictureMetadata:
     picture_service = PictureService(db=db)
     picture: DBPicture = await picture_service.get_picture(picture_id)
-    picture_metadata: DBPictureMetadata = await picture_service.get_metadata(
-        picture.metadata_id
-    )
-    return picture_metadata.to_api_return(picture_id)
+    if picture:
+        picture_metadata: DBPictureMetadata = await picture_service.get_metadata(
+            picture.metadata_id
+        )
+        return picture_metadata.to_api_return(picture_id)
+    raise HTTPException(status_code=404, detail="Item not found")
 
 
 @waterbowl_router.patch("/pictures/{picture_id}/", response_model=models.Picture)
@@ -95,5 +106,9 @@ async def update_picture_endpoint(
 ) -> models.Picture:
     picture_service = PictureService(db=db)
     picture: DBPicture = await picture_service.get_picture(picture_id=picture_id)
-    await picture_service.update_metadata(picture.metadata_id, updates=update_request)
-    return picture
+    if picture:
+        await picture_service.update_metadata(
+            picture.metadata_id, updates=update_request
+        )
+        return picture
+    raise HTTPException(status_code=404, detail="Item not found")

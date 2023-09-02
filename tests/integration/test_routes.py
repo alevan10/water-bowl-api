@@ -168,5 +168,15 @@ class TestRoutes:
         test_client: AsyncClient,
         add_picture: AsyncGenerator[DBPicture, None],
     ):
-        pictures_response = await test_client.get(f"/pictures/0/")
+        pictures_response = await test_client.get("/pictures/0/")
+        assert pictures_response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_get_single_picture_returns_404_with_missing_file(
+        self,
+        test_client: AsyncClient,
+        add_picture: AsyncGenerator[DBPicture, None],
+    ):
+        _ = await add_picture(water_bowl="/usr/bin/path.jpg")
+        pictures_response = await test_client.get(f"/pictures/")
         assert pictures_response.status_code == 404

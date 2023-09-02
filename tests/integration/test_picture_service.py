@@ -160,4 +160,3 @@ class TestPictureService:
         picture_svc = PictureService(db=postgres)
         returned_picture = await picture_svc.get_picture(picture_id=0)
         assert returned_picture is None
-

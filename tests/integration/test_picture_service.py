@@ -96,17 +96,13 @@ class TestPictureService:
     ):
         unannotated_picture = await add_picture(timestamp=now, human_water_yes=0)
         annotated_picture = await add_picture(timestamp=now, human_water_yes=1)
-        await add_picture(timestamp=now)
 
         picture_svc = PictureService(db=postgres)
         returned_picture = await picture_svc.get_random_picture(limit=limit)
         if limit == PictureRetrieveLimits.NO_ANNOTATION:
-            while returned_picture.id != unannotated_picture.id:
-                returned_picture = await picture_svc.get_random_picture(limit=limit)
             assert unannotated_picture.id == returned_picture.id
         else:
-            # TODO: Filters aren't working correctly, but for not that's not a deal breaker
-            assert returned_picture.id
+            assert annotated_picture.id == returned_picture.id
 
     @pytest.mark.asyncio
     async def test_update_picture(
@@ -155,3 +151,12 @@ class TestPictureService:
         assert updated_metadata.water_in_bowl is True
         assert test_metadata_dict.get("cat_at_bowl") != updated_metadata.cat_at_bowl
         assert updated_metadata.cat_at_bowl is True
+
+    @pytest.mark.asyncio
+    async def test_get_picture_none_available(
+        self,
+        postgres,
+    ):
+        picture_svc = PictureService(db=postgres)
+        returned_picture = await picture_svc.get_picture(picture_id=0)
+        assert returned_picture is None

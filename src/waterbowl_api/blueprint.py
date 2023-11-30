@@ -8,6 +8,8 @@ import models
 from enums import PictureRetrieveLimits, PictureType
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile
 from fastapi.responses import FileResponse
+
+from packaging_service import ZipPackager
 from picture_service import PictureService
 from postgres.database import Base, engine, get_db
 from postgres.db_models import DBPicture, DBPictureMetadata
@@ -112,3 +114,45 @@ async def update_picture_endpoint(
         )
         return picture
     raise HTTPException(status_code=404, detail="Item not found")
+
+
+@waterbowl_router.get("/pictures/annotated-batch/")
+async def get_batch_picture_endpoint(
+    db: AsyncSession = Depends(get_db),
+    picture_type: Optional[PictureType] = PictureType.WATER_BOWL,
+    picture_class: Optional[bool] = None,
+    limit: Optional[int] = 100,
+) -> FileResponse:
+    """
+    Returns a .zip file containing a directory of classified images split between positive and negative classes,
+    and a json file with image information.
+    """
+    picture_service = PictureService(db=db)
+    positive_pictures: list[DBPicture] = []
+    negative_pictures: list[DBPicture] = []
+    if picture_class is True or picture_class is None:
+        positive_pictures = await picture_service.get_annotated_pictures(
+            limit=limit, picture_type=picture_type, picture_class=True
+        )
+    if picture_class is False or picture_class is None:
+        negative_pictures = await picture_service.get_annotated_pictures(
+            limit=limit, picture_type=picture_type, picture_class=False
+        )
+    if not positive_pictures and not negative_pictures:
+        raise HTTPException(status_code=404, detail="No items found with given limit.")
+    picture_metadata = {}
+    for picture in [*positive_pictures, *negative_pictures]:
+        file = (
+            FilePath(picture.waterbowl_picture)
+            if picture_type == PictureType.WATER_BOWL
+            else FilePath(picture.food_picture)
+        )
+        if file.exists():
+            picture_metadata[file.name] = json.dumps(picture.to_dict())
+    async with ZipPackager.generate_dataset_zip(
+            positive_picture_files=positive_pictures,
+            negative_picture_files=negative_pictures,
+            picture_metadata=picture_metadata,
+            class_name=picture_type
+    ) as zip_package:
+        return FileResponse(zip_package)

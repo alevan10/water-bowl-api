@@ -10,7 +10,7 @@ from enums import (
     FOOD_BOWL_CROP_WINDOW,
     PICTURES_DIR,
     WATER_BOWL_CROP_WINDOW,
-    PictureRetrieveLimits,
+    PictureRetrieveLimits, PictureType,
 )
 from fastapi import UploadFile
 from models import PictureUpdateRequest
@@ -104,7 +104,7 @@ class PictureService:
             logger.debug("No picture found with id %s", picture_id)
         return picture
 
-    async def get_random_picture(self, limit: PictureRetrieveLimits = None):
+    async def get_random_picture(self, limit: PictureRetrieveLimits = None) -> DBPicture | None:
         statement = (
             select(DBPicture)
             .order_by(func.random())  # pylint: disable=not-callable
@@ -173,3 +173,46 @@ class PictureService:
         )
         await self._db.execute(statement=statement)
         return metadata
+
+    async def get_annotated_pictures(self, limit: int, picture_type: PictureType, picture_class: bool) -> list[DBPicture]:
+        if limit < 0:
+            limit = None
+        if picture_type == PictureType.WATER_BOWL:
+            metadata_type = DBPictureMetadata.water_in_bowl
+        elif picture_type == PictureType.FOOD_BOWL:
+            metadata_type = DBPictureMetadata.food_in_bowl
+        else:
+            metadata_type = DBPictureMetadata.cat_at_bowl
+
+        if picture_class is True:
+            statement = (
+                select(DBPicture, DBPictureMetadata)
+                .join(DBPicture.picture_metadata)
+                .filter(
+                    metadata_type is True
+                )
+                .order_by(func.random())  # pylint: disable=not-callable
+                .limit(limit)
+            )
+        else:
+            if picture_type == PictureType.WATER_BOWL:
+                metadata_annotation_type = DBPictureMetadata.human_water_no
+            elif picture_type == PictureType.FOOD_BOWL:
+                metadata_annotation_type = DBPictureMetadata.human_food_no
+            else:
+                metadata_annotation_type = DBPictureMetadata.human_cat_no
+            statement = (
+                select(DBPicture, DBPictureMetadata)
+                .join(DBPicture.picture_metadata)
+                .filter(
+                    and_(
+                        metadata_type is False,
+                        metadata_annotation_type > 0
+                    )
+                )
+                .order_by(func.random())  # pylint: disable=not-callable
+                .limit(limit)
+            )
+        result: Result = await self._db.execute(statement)
+        if pictures := result.fetchall():
+            return next(zip(*pictures)[0], ())

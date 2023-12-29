@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 
 import aiofiles
 import shortuuid
@@ -107,7 +107,7 @@ class PictureService:
 
     async def get_random_picture(
         self, limit: PictureRetrieveLimits = None
-    ) -> DBPicture | None:
+    ) -> Optional[DBPicture]:
         statement = (
             select(DBPicture)
             .order_by(func.random())  # pylint: disable=not-callable
@@ -213,4 +213,4 @@ class PictureService:
             )
         result: Result = await self._db.execute(statement)
         if pictures := result.fetchall():
-            return next(zip(*pictures)[0], ())
+            return next(zip(*pictures)[0], ())  # pylint: disable=unsubscriptable-object

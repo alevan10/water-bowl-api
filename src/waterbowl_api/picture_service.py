@@ -10,7 +10,8 @@ from enums import (
     FOOD_BOWL_CROP_WINDOW,
     PICTURES_DIR,
     WATER_BOWL_CROP_WINDOW,
-    PictureRetrieveLimits, PictureType,
+    PictureRetrieveLimits,
+    PictureType,
 )
 from fastapi import UploadFile
 from models import PictureUpdateRequest
@@ -104,7 +105,9 @@ class PictureService:
             logger.debug("No picture found with id %s", picture_id)
         return picture
 
-    async def get_random_picture(self, limit: PictureRetrieveLimits = None) -> DBPicture | None:
+    async def get_random_picture(
+        self, limit: PictureRetrieveLimits = None
+    ) -> DBPicture | None:
         statement = (
             select(DBPicture)
             .order_by(func.random())  # pylint: disable=not-callable
@@ -174,7 +177,9 @@ class PictureService:
         await self._db.execute(statement=statement)
         return metadata
 
-    async def get_annotated_pictures(self, limit: int, picture_type: PictureType, picture_class: bool) -> list[DBPicture]:
+    async def get_annotated_pictures(
+        self, limit: int, picture_type: PictureType, picture_class: bool
+    ) -> list[DBPicture]:
         if limit < 0:
             limit = None
         if picture_type == PictureType.WATER_BOWL:
@@ -188,9 +193,7 @@ class PictureService:
             statement = (
                 select(DBPicture, DBPictureMetadata)
                 .join(DBPicture.picture_metadata)
-                .filter(
-                    metadata_type is True
-                )
+                .filter(metadata_type is True)
                 .order_by(func.random())  # pylint: disable=not-callable
                 .limit(limit)
             )
@@ -204,12 +207,7 @@ class PictureService:
             statement = (
                 select(DBPicture, DBPictureMetadata)
                 .join(DBPicture.picture_metadata)
-                .filter(
-                    and_(
-                        metadata_type is False,
-                        metadata_annotation_type > 0
-                    )
-                )
+                .filter(and_(metadata_type is False, metadata_annotation_type > 0))
                 .order_by(func.random())  # pylint: disable=not-callable
                 .limit(limit)
             )

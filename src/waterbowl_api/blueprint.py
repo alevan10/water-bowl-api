@@ -8,7 +8,6 @@ import models
 from enums import PictureRetrieveLimits, PictureType
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile
 from fastapi.responses import FileResponse
-
 from packaging_service import ZipPackager
 from picture_service import PictureService
 from postgres.database import Base, engine, get_db
@@ -150,9 +149,9 @@ async def get_batch_picture_endpoint(
         if file.exists():
             picture_metadata[file.name] = json.dumps(picture.to_dict())
     async with ZipPackager.generate_dataset_zip(
-            positive_picture_files=positive_pictures,
-            negative_picture_files=negative_pictures,
-            picture_metadata=picture_metadata,
-            class_name=picture_type
+        positive_picture_files=positive_pictures,
+        negative_picture_files=negative_pictures,
+        picture_metadata=picture_metadata,
+        class_name=picture_type,
     ) as zip_package:
         return FileResponse(zip_package)

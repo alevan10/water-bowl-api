@@ -54,12 +54,16 @@ class DBPicture(Base):
         "DBPictureMetadata", foreign_keys=[metadata_id], lazy="joined"
     )
 
-    def to_dict(self):
-        return {
+    def to_dict(self, flat: bool = False):
+        base_dict = {
             "id": self.id,
             "metadata_id": self.metadata_id,
             "waterbowl_picture": self.waterbowl_picture,
             "food_picture": self.food_picture,
             "picture_timestamp": str(self.picture_timestamp),
-            "picture_metadata": self.picture_metadata.to_dict(),
         }
+        if flat:
+            base_dict.update(self.picture_metadata.to_dict())
+        else:
+            base_dict.update({"picture_metadata": self.picture_metadata.to_dict()})
+        return base_dict

@@ -185,11 +185,20 @@ class TestRoutes:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("annotation", [True, False])
-    async def test_get_batch_pictures(self, test_client, add_picture, tmpdir, annotation):
+    async def test_get_batch_pictures(
+        self, test_client, add_picture, tmpdir, annotation
+    ):
         download_dir = tmpdir.mkdir("downloads")
-        annotation_kwarg = {"human_water_yes": 1, "water_in_bowl": True} if annotation is True else {"human_water_no": 1, "water_in_bowl": False}
+        annotation_kwarg = (
+            {"human_water_yes": 1, "water_in_bowl": True}
+            if annotation is True
+            else {"human_water_no": 1, "water_in_bowl": False}
+        )
         expected_picture: DBPicture = await add_picture(**annotation_kwarg)
-        pictures_response = await test_client.get("/batch-pictures/", params={"pictureType": "water_bowl", "pictureClass": annotation})
+        pictures_response = await test_client.get(
+            "/batch-pictures/",
+            params={"pictureType": "water_bowl", "pictureClass": annotation},
+        )
         assert pictures_response.status_code == 200
         pictures_collection = Path(f"{download_dir}/result.zip")
         async with aiofiles.open(pictures_collection, "wb") as zip_file:
@@ -208,12 +217,15 @@ class TestRoutes:
     @pytest.mark.asyncio
     async def test_get_batch_pictures_no_class(self, test_client, add_picture, tmpdir):
         download_dir = tmpdir.mkdir("downloads")
-        expected_positive_picture: DBPicture = await add_picture(human_water_yes=1, water_in_bowl=True)
-        expected_negative_picture: DBPicture = await add_picture(human_water_no=1, water_in_bowl=False)
+        expected_positive_picture: DBPicture = await add_picture(
+            human_water_yes=1, water_in_bowl=True
+        )
+        expected_negative_picture: DBPicture = await add_picture(
+            human_water_no=1, water_in_bowl=False
+        )
 
         pictures_response = await test_client.get(
-        "/batch-pictures/",
-            params={"pictureType": "water_bowl"}
+            "/batch-pictures/", params={"pictureType": "water_bowl"}
         )
         assert pictures_response.status_code == 200
         pictures_collection = Path(f"{download_dir}/result.zip")

@@ -42,16 +42,16 @@ class ZipPackager:
                 shutil.copyfile(
                     picture_file, negative_class_dir.joinpath(picture_file.name)
                 )
-            with open(
-                tmp_dir_path.joinpath("picture_data.csv"), "w+"
-            ) as data_file:
+            with open(tmp_dir_path.joinpath("picture_data.csv"), "w+") as data_file:
                 csv_writer = csv.writer(data_file)
                 for i, metadata in enumerate(picture_metadata):
                     if i == 0:
                         csv_writer.writerow(metadata.keys())
                     csv_writer.writerow(metadata.values())
-            archive = Path(shutil.make_archive(
-                base_name=dataset_name, format="zip", root_dir=tmp_dir_path
-            ))
+            archive = Path(
+                shutil.make_archive(
+                    base_name=dataset_name, format="zip", root_dir=tmp_dir_path
+                )
+            )
             yield archive
             archive.unlink(missing_ok=True)

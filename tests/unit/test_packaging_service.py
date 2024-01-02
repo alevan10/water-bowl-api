@@ -20,7 +20,9 @@ async def test_generate_single_class_archive(
         positive_pictures = [test_water_bowl_picture_file]
     if image_class is False:
         negative_pictures = [test_water_bowl_picture_file]
-    picture_metadata = [{"filename": test_water_bowl_picture_file.name, "some": "metadata"}]
+    picture_metadata = [
+        {"filename": test_water_bowl_picture_file.name, "some": "metadata"}
+    ]
     async with ZipPackager.generate_dataset_zip(
         positive_picture_files=positive_pictures,
         negative_picture_files=negative_pictures,
@@ -60,7 +62,7 @@ async def test_generate_multiple_class_archive(test_water_bowl_picture_file: Pat
         )
         picture_metadata = [
             {"filename": positive_picture.name, "some": "metadata"},
-            {"filename": negative_picture.name, "some": "metadata"}
+            {"filename": negative_picture.name, "some": "metadata"},
         ]
         async with ZipPackager.generate_dataset_zip(
             positive_picture_files=[positive_picture],
@@ -76,7 +78,7 @@ async def test_generate_multiple_class_archive(test_water_bowl_picture_file: Pat
                 csv_file = Path(
                     next(file for file in files if file.name.endswith("csv"))
                 )
-                with open(csv_file, 'r') as file:
+                with open(csv_file, "r") as file:
                     csv_reader = csv.DictReader(file)
                     csv_data = [row for row in csv_reader]
                 assert list(csv_data[0].keys()) == ["filename", "some"]
@@ -91,10 +93,16 @@ async def test_generate_multiple_class_archive(test_water_bowl_picture_file: Pat
                 assert len(class_files) == 1
                 picture_file = class_files[0]
                 assert picture_file.name == positive_picture.name
-                assert csv_data[0] == {"filename": positive_picture.name, "some": "metadata"}
+                assert csv_data[0] == {
+                    "filename": positive_picture.name,
+                    "some": "metadata",
+                }
 
                 class_files = list(negative_dir.glob("*"))
                 assert len(class_files) == 1
                 picture_file = class_files[0]
                 assert picture_file.name == negative_picture.name
-                assert csv_data[1] == {"filename": negative_picture.name, "some": "metadata"}
+                assert csv_data[1] == {
+                    "filename": negative_picture.name,
+                    "some": "metadata",
+                }

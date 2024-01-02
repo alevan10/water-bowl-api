@@ -4,8 +4,6 @@ import os
 from pathlib import Path as FilePath
 from typing import Optional
 
-from starlette.responses import StreamingResponse
-
 import models
 from enums import PictureRetrieveLimits, PictureType
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile
@@ -15,6 +13,7 @@ from picture_service import PictureService
 from postgres.database import Base, engine, get_db
 from postgres.db_models import DBPicture, DBPictureMetadata
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import StreamingResponse
 
 waterbowl_router = APIRouter()
 
@@ -171,7 +170,6 @@ async def get_batch_picture_endpoint(
         class_name=picture_type,
     ) as zip_package:
         response = StreamingResponse(
-            zip_package.open("rb"),
-            media_type="application/x-zip-compressed"
+            zip_package.open("rb"), media_type="application/x-zip-compressed"
         )
         return response

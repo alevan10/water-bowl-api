@@ -16,7 +16,7 @@ from enums import (
 from fastapi import UploadFile
 from models import PictureUpdateRequest
 from postgres.db_models import DBPicture, DBPictureMetadata
-from sqlalchemy import and_, or_, select, update, true, false
+from sqlalchemy import and_, false, or_, select, true, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import func

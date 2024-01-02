@@ -2,7 +2,9 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator
+from zipfile import ZipFile
 
+import aiofiles
 import pytest
 import pytest_asyncio
 from enums import PictureRetrieveLimits, PictureType
@@ -178,5 +180,64 @@ class TestRoutes:
         add_picture: AsyncGenerator[DBPicture, None],
     ):
         _ = await add_picture(water_bowl="/usr/bin/path.jpg")
-        pictures_response = await test_client.get(f"/pictures/")
+        pictures_response = await test_client.get("/pictures/")
         assert pictures_response.status_code == 404
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("annotation", [True, False])
+    async def test_get_batch_pictures(
+        self, test_client, add_picture, tmpdir, annotation
+    ):
+        download_dir = tmpdir.mkdir("downloads")
+        annotation_kwarg = (
+            {"human_water_yes": 1, "water_in_bowl": True}
+            if annotation is True
+            else {"human_water_no": 1, "water_in_bowl": False}
+        )
+        expected_picture: DBPicture = await add_picture(**annotation_kwarg)
+        pictures_response = await test_client.get(
+            "/batch-pictures/",
+            params={"pictureType": "water_bowl", "pictureClass": annotation},
+        )
+        assert pictures_response.status_code == 200
+        pictures_collection = Path(f"{download_dir}/result.zip")
+        async with aiofiles.open(pictures_collection, "wb") as zip_file:
+            await zip_file.write(pictures_response.read())
+        assert pictures_collection.exists()
+        with ZipFile(pictures_collection, "r") as open_collection:
+            filenames = [Path(name).name for name in open_collection.namelist()]
+            if annotation is True:
+                expected_sub_directory = "water_bowl_true"
+            else:
+                expected_sub_directory = "water_bowl_false"
+            assert expected_sub_directory in filenames
+            assert Path(expected_picture.waterbowl_picture).name in filenames
+            assert "picture_data.csv" in filenames
+
+    @pytest.mark.asyncio
+    async def test_get_batch_pictures_no_class(self, test_client, add_picture, tmpdir):
+        download_dir = tmpdir.mkdir("downloads")
+        expected_positive_picture: DBPicture = await add_picture(
+            human_water_yes=1, water_in_bowl=True
+        )
+        expected_negative_picture: DBPicture = await add_picture(
+            human_water_no=1, water_in_bowl=False
+        )
+
+        pictures_response = await test_client.get(
+            "/batch-pictures/", params={"pictureType": "water_bowl"}
+        )
+        assert pictures_response.status_code == 200
+        pictures_collection = Path(f"{download_dir}/result.zip")
+        async with aiofiles.open(pictures_collection, "wb") as zip_file:
+            await zip_file.write(pictures_response.read())
+        assert pictures_collection.exists()
+        with ZipFile(pictures_collection, "r") as open_collection:
+            filenames = [Path(name).name for name in open_collection.namelist()]
+            assert "water_bowl_false" in filenames
+            assert "water_bowl_true" in filenames
+            # Right now our tests use the same filename regardless, so let's remove one of them to verify both are included
+            assert Path(expected_positive_picture.waterbowl_picture).name in filenames
+            filenames.remove(Path(expected_positive_picture.waterbowl_picture).name)
+            assert Path(expected_negative_picture.waterbowl_picture).name in filenames
+            assert "picture_data.csv" in filenames

@@ -1,5 +1,6 @@
 /venv/
 
+.DS_Store
 .idea
 src/waterbowl_api/postgres/__pycache__/
 src/waterbowl_api/__pycache__/

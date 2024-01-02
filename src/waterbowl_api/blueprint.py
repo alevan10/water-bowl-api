@@ -4,6 +4,8 @@ import os
 from pathlib import Path as FilePath
 from typing import Optional
 
+from starlette.responses import StreamingResponse
+
 import models
 from enums import PictureRetrieveLimits, PictureType
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile
@@ -115,13 +117,13 @@ async def update_picture_endpoint(
     raise HTTPException(status_code=404, detail="Item not found")
 
 
-@waterbowl_router.get("/pictures/annotated-batch/")
+@waterbowl_router.get("/batch-pictures/")
 async def get_batch_picture_endpoint(
     db: AsyncSession = Depends(get_db),
     picture_type: Optional[PictureType] = PictureType.WATER_BOWL,
     picture_class: Optional[bool] = None,
     limit: Optional[int] = 100,
-) -> FileResponse:
+) -> StreamingResponse:
     """
     Returns a .zip file containing a directory of classified images split between positive and negative classes,
     and a json file with image information.
@@ -139,7 +141,9 @@ async def get_batch_picture_endpoint(
         )
     if not positive_pictures and not negative_pictures:
         raise HTTPException(status_code=404, detail="No items found with given limit.")
-    picture_metadata = {}
+    picture_metadata = []
+    positive_picture_files = []
+    negative_picture_files = []
     for picture in [*positive_pictures, *negative_pictures]:
         file = (
             FilePath(picture.waterbowl_picture)
@@ -147,11 +151,27 @@ async def get_batch_picture_endpoint(
             else FilePath(picture.food_picture)
         )
         if file.exists():
-            picture_metadata[file.name] = json.dumps(picture.to_dict())
+            picture_data = picture.to_dict(flat=True)
+            picture_data.update({"filename": file.name})
+            picture_metadata.append(picture_data)
+        if picture_type == PictureType.WATER_BOWL:
+            if picture.picture_metadata.water_in_bowl is True:
+                positive_picture_files.append(file)
+            else:
+                negative_picture_files.append(file)
+        else:
+            if picture.picture_metadata.food_in_bowl is True:
+                positive_picture_files.append(file)
+            else:
+                negative_picture_files.append(file)
     async with ZipPackager.generate_dataset_zip(
-        positive_picture_files=positive_pictures,
-        negative_picture_files=negative_pictures,
+        positive_picture_files=positive_picture_files,
+        negative_picture_files=negative_picture_files,
         picture_metadata=picture_metadata,
         class_name=picture_type,
     ) as zip_package:
-        return FileResponse(zip_package)
+        response = StreamingResponse(
+            zip_package.open("rb"),
+            media_type="application/x-zip-compressed"
+        )
+        return response

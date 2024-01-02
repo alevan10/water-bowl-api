@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-from enums import PictureRetrieveLimits
+from enums import PictureRetrieveLimits, PictureType
 from models import PictureUpdateRequest
 from picture_service import PictureService
 from postgres.db_models import DBPicture
@@ -160,3 +160,21 @@ class TestPictureService:
         picture_svc = PictureService(db=postgres)
         returned_picture = await picture_svc.get_picture(picture_id=0)
         assert returned_picture is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("annotation", [True, False])
+    async def test_get_annotated_pictures(self, add_picture, postgres, annotation):
+        annotation_kwarg = {"human_water_yes": 1} if annotation is True else {"human_water_no": 1}
+        test_picture: DBPicture = await add_picture(water_in_bowl=annotation, **annotation_kwarg)
+        picture_svc = PictureService(db=postgres)
+        returned_pictures = await picture_svc.get_annotated_pictures(
+            limit=-1, picture_type=PictureType.WATER_BOWL, picture_class=annotation
+        )
+        assert returned_pictures is not None
+        assert len(returned_pictures) == 1
+        returned_picture = returned_pictures[0]
+        assert returned_picture.id == test_picture.id
+        assert returned_picture.picture_metadata.water_in_bowl is annotation
+        for key, value in annotation_kwarg.items():
+            assert getattr(returned_picture.picture_metadata, key) == value
+

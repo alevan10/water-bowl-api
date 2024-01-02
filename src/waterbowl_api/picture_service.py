@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 import aiofiles
 import shortuuid
@@ -16,7 +16,7 @@ from enums import (
 from fastapi import UploadFile
 from models import PictureUpdateRequest
 from postgres.db_models import DBPicture, DBPictureMetadata
-from sqlalchemy import and_, or_, select, update
+from sqlalchemy import and_, or_, select, update, true, false
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import func
@@ -191,9 +191,9 @@ class PictureService:
 
         if picture_class is True:
             statement = (
-                select(DBPicture, DBPictureMetadata)
+                select(DBPicture)
                 .join(DBPicture.picture_metadata)
-                .filter(metadata_type is True)
+                .filter(metadata_type == true())
                 .order_by(func.random())  # pylint: disable=not-callable
                 .limit(limit)
             )
@@ -205,12 +205,14 @@ class PictureService:
             else:
                 metadata_annotation_type = DBPictureMetadata.human_cat_no
             statement = (
-                select(DBPicture, DBPictureMetadata)
+                select(DBPicture)
                 .join(DBPicture.picture_metadata)
-                .filter(and_(metadata_type is False, metadata_annotation_type > 0))
+                .filter(and_(metadata_type == false(), metadata_annotation_type > 0))
                 .order_by(func.random())  # pylint: disable=not-callable
                 .limit(limit)
             )
         result: Result = await self._db.execute(statement)
         if pictures := result.fetchall():
-            return next(zip(*pictures)[0], ())  # pylint: disable=unsubscriptable-object
+            pictures = [picture[0] for picture in pictures]
+            return cast(list[DBPicture], pictures)
+        return []

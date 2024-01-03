@@ -117,34 +117,46 @@ def add_multiple_pictures(
     postgres: AsyncSession,
     test_water_bowl_picture_file: Path,
     test_food_bowl_picture_file: Path,
+    add_picture: AsyncGenerator[DBPicture, None],
 ) -> AsyncGenerator[list[DBPicture], None]:
     water_bowl = test_water_bowl_picture_file
     food_bowl = test_food_bowl_picture_file
     now = datetime.now()
     session = postgres
     created_pictures = []
+    factory = add_picture
 
     async def _add_pictures(
         water_bowl: str = str(water_bowl),
         food_bowl: str = str(food_bowl),
         timestamp: datetime = now,
         num_pictures: int = 5,
+        water_in_bowl: bool = False,
+        food_in_bowl: bool = False,
+        cat_at_bowl: bool = False,
+        human_cat_yes: int = 0,
+        human_water_yes: int = 0,
+        human_food_yes: int = 0,
+        human_cat_no: int = 0,
+        human_water_no: int = 0,
+        human_food_no: int = 0,
     ):
         new_pictures = []
         for i in range(0, num_pictures):
-            new_metadata = DBPictureMetadata()
-            session.add(new_metadata)
-            await session.commit()
-            new_picture = DBPicture(
-                metadata_id=new_metadata.id,
-                waterbowl_picture=water_bowl,
-                food_picture=food_bowl,
-                picture_timestamp=timestamp,
+            new_picture = await factory(
+                water_bowl=water_bowl,
+                food_bowl=food_bowl,
+                timestamp=timestamp,
+                water_in_bowl=water_in_bowl,
+                food_in_bowl=food_in_bowl,
+                cat_at_bowl=cat_at_bowl,
+                human_cat_yes=human_cat_yes,
+                human_water_yes=human_water_yes,
+                human_food_yes=human_food_yes,
+                human_cat_no=human_cat_no,
+                human_water_no=human_water_no,
+                human_food_no=human_food_no,
             )
-            created_pictures.append(new_picture)
-            session.add(new_picture)
-            await session.commit()
-            await session.refresh(new_picture)
             new_pictures.append(new_picture)
         return new_pictures
 

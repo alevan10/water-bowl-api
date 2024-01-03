@@ -181,3 +181,35 @@ class TestPictureService:
         assert returned_picture.picture_metadata.water_in_bowl is annotation
         for key, value in annotation_kwarg.items():
             assert getattr(returned_picture.picture_metadata, key) == value
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("annotation", [True, False])
+    async def test_get_human_annotation_pictures_mixed_with_computer_annotated_pictures(
+        self, add_multiple_pictures, postgres, annotation
+    ):
+        # Add 10 human annotated pictures:
+        annotation_kwarg = (
+            {"human_water_yes": 1} if annotation is True else {"human_water_no": 1}
+        )
+        human_annotated = await add_multiple_pictures(
+            water_in_bowl=annotation, num_pictures=10, **annotation_kwarg
+        )
+
+        # Add 5 machine annotated pictures
+        computer_annotated = await add_multiple_pictures(water_in_bowl=annotation)
+
+        picture_svc = PictureService(db=postgres)
+        returned_pictures = await picture_svc.get_annotated_pictures(
+            limit=-1, picture_type=PictureType.WATER_BOWL, picture_class=annotation
+        )
+
+        assert len(returned_pictures) != len(computer_annotated)
+        assert len(returned_pictures) == len(human_annotated)
+        returned_pictures.sort(key=lambda picture: picture.id)
+        human_annotated.sort(key=lambda picture: picture.id)
+
+        computer_annotated_picture_ids = [picture.id for picture in computer_annotated]
+
+        for expected, human in zip(returned_pictures, human_annotated):
+            assert expected == human
+            assert human.id not in computer_annotated_picture_ids

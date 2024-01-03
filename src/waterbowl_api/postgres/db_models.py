@@ -21,6 +21,12 @@ class DBPictureMetadata(Base):
     human_water_no = Column(Integer, default=0)
     human_food_no = Column(Integer, default=0)
 
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, DBPictureMetadata):
+            return self.to_dict() == other.to_dict()
+        return False
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -53,6 +59,12 @@ class DBPicture(Base):
     picture_metadata = relationship(
         "DBPictureMetadata", foreign_keys=[metadata_id], lazy="joined"
     )
+
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, DBPicture):
+            return self.to_dict() == other.to_dict()
+        return False
 
     def to_dict(self, flat: bool = False):
         base_dict = {

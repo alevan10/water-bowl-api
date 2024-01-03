@@ -16,7 +16,7 @@ from enums import (
 from fastapi import UploadFile
 from models import PictureUpdateRequest
 from postgres.db_models import DBPicture, DBPictureMetadata
-from sqlalchemy import and_, false, or_, select, true, update
+from sqlalchemy import Column, and_, false, or_, select, true, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import func
@@ -177,6 +177,28 @@ class PictureService:
         await self._db.execute(statement=statement)
         return metadata
 
+    def _get_annotation_type(
+        self, picture_type: PictureType, picture_class: Optional[bool]
+    ) -> int:
+        if picture_type == PictureType.WATER_BOWL:
+            return (
+                DBPictureMetadata.human_water_yes
+                if picture_class is True or picture_class is None
+                else DBPictureMetadata.human_water_no
+            )
+        elif picture_type == PictureType.FOOD_BOWL:
+            return (
+                DBPictureMetadata.human_food_yes
+                if picture_class is True or picture_class is None
+                else DBPictureMetadata.human_food_no
+            )
+        else:
+            return (
+                DBPictureMetadata.human_cat_yes
+                if picture_class is True or picture_class is None
+                else DBPictureMetadata.human_cat_no
+            )
+
     async def get_annotated_pictures(
         self, limit: int, picture_type: PictureType, picture_class: bool
     ) -> list[DBPicture]:
@@ -188,22 +210,18 @@ class PictureService:
             metadata_type = DBPictureMetadata.food_in_bowl
         else:
             metadata_type = DBPictureMetadata.cat_at_bowl
-
+        metadata_annotation_type = self._get_annotation_type(
+            picture_type=picture_type, picture_class=picture_class
+        )
         if picture_class is True:
             statement = (
                 select(DBPicture)
                 .join(DBPicture.picture_metadata)
-                .filter(metadata_type == true())
+                .filter(and_(metadata_type == true(), metadata_annotation_type > 0))
                 .order_by(func.random())  # pylint: disable=not-callable
                 .limit(limit)
             )
         else:
-            if picture_type == PictureType.WATER_BOWL:
-                metadata_annotation_type = DBPictureMetadata.human_water_no
-            elif picture_type == PictureType.FOOD_BOWL:
-                metadata_annotation_type = DBPictureMetadata.human_food_no
-            else:
-                metadata_annotation_type = DBPictureMetadata.human_cat_no
             statement = (
                 select(DBPicture)
                 .join(DBPicture.picture_metadata)
